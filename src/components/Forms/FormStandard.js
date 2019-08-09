@@ -210,7 +210,7 @@ class FormStandard extends Component {
                                 <FormGroup row>
                                     <label className="col-md-2 col-form-label">Static control</label>
                                     <div className="col-md-10">
-                                        <Input plaintext>Some plain text/ static value</Input>
+                                        <Input plaintext/>
                                     </div>
                                 </FormGroup>
                             </fieldset>

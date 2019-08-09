@@ -32,3 +32,9 @@ table.index-table {
   @extend %base-report-tooltip;
   width: 300px;
 }
+
+.comment-edit-popover {
+  position: fixed;
+  right: -16px;
+  width: 300px;
+}

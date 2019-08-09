@@ -6,10 +6,23 @@ import IndustryStatistics from "../../Model/IndustryStatistics";
 import Brand from "../../Model/Brand";
 import React from 'react'
 import {getIndexOfParent, getRootIndices} from "../../Utils/IndexUtils";
-import {Card, Nav, NavItem, NavLink, TabContent, Table, TabPane, Tooltip} from 'reactstrap'
+import {
+    Button,
+    Card,
+    Nav,
+    NavItem,
+    NavLink,
+    TabContent,
+    Table,
+    TabPane,
+    Tooltip,
+    Popover,
+    PopoverHeader,
+    PopoverBody,
+    Input
+} from 'reactstrap'
 import ContentWrapper from "../../Layout/ContentWrapper";
 import classnames from 'classnames';
-
 
 /**
  * 仅仅显示传入的品牌报告的页面组件
@@ -21,7 +34,13 @@ export default class BrandReportViewer extends React.Component {
         brand: PropTypes.instanceOf(Brand).isRequired,
         comments: PropTypes.arrayOf(PropTypes.instanceOf(BrandReportComment)),
         industryStatistics: PropTypes.instanceOf(IndustryStatistics),
-        enableCommentEditing: PropTypes.bool
+        enableCommentEditing: PropTypes.bool,
+        /**
+         * 当有评论更新的时候的回调函数，不更改，仅展示
+         *
+         * @type {function(Index, string)}
+         */
+        onDataCommentUpdate: PropTypes.func,
     };
 
     constructor(props, context) {
@@ -42,6 +61,10 @@ export default class BrandReportViewer extends React.Component {
         }
     }
 
+    onCommentChange(index, value) {
+        this.props.onDataCommentUpdate(index, value);
+    }
+
     render() {
         let rootIndices = getRootIndices(this.props.indices);
 
@@ -57,7 +80,8 @@ export default class BrandReportViewer extends React.Component {
                     <IndexTableRow key={j} brandReport={this.props.brandReport} indices={this.props.indices}
                                    index={childIndices[j]} industryStatistics={this.props.industryStatistics}
                                    comments={this.props.comments}
-                                   enableCommentEditing={this.props.enableCommentEditing}/>
+                                   enableCommentEditing={this.props.enableCommentEditing}
+                                   onCommentUpdate={this.onCommentChange.bind(this)}/>
                 );
             }
             navItems.push(
@@ -154,20 +178,23 @@ class IndexTableRow extends React.Component {
 
         this.getStatToolTip = this.getStatToolTip.bind(this);
         this.getCommentToolTip = this.getCommentToolTip.bind(this);
+        this.getUserComment = this.getUserComment.bind(this);
         this.state = {
             statToolTipOpen: false,
             commentToolTipOpen: false,
+            commentEditPopoverOpen: false,
             hover: false,
         }
     }
 
-    shouldComponentUpdate(nextProps, nextState, nextContext) {
-        if (nextState.hover !== this.state.hover || nextState.statToolTipOpen !== this.state.statToolTipOpen || nextState.commentToolTipOpen !== this.state.commentToolTipOpen) {
-            return true;
-        }
-        return !(nextProps.indices.length === this.props.indices.length && nextProps.index.indexId === this.props.index.indexId
-            && nextProps.comments.length === this.props.comments.length && nextProps.brandReport.brandReportId === this.props.brandReport.brandReportId);
-    }
+    // shouldComponentUpdate(nextProps, nextState, nextContext) {
+    //     if (nextState.commentEditPopoverOpen !== this.state.commentToolTipOpen || nextState.hover !== this.state.hover
+    //         || nextState.statToolTipOpen !== this.state.statToolTipOpen || nextState.commentToolTipOpen !== this.state.commentToolTipOpen) {
+    //         return true;
+    //     }
+    //     return !(nextProps.indices.length === this.props.indices.length && nextProps.index.indexId === this.props.index.indexId
+    //         && nextProps.comments.length === this.props.comments.length && nextProps.brandReport.brandReportId === this.props.brandReport.brandReportId);
+    // }
 
     toggleOnHover() {
         this.setState({hover: !this.state.hover});
@@ -238,8 +265,9 @@ class IndexTableRow extends React.Component {
      * 构造评论的ToolTip
      * @param comments
      * @param index
+     * @param target ToolTip的Target
      */
-    getCommentToolTip(comments, index) {
+    getCommentToolTip(comments, index, target) {
         let self = this;
         let elements = [];
         let toolTip = null;
@@ -259,13 +287,35 @@ class IndexTableRow extends React.Component {
                 <Tooltip innerClassName="comment-tooltip" key={2} isOpen={self.state.commentToolTipOpen}
                          toggle={() => {
                              self.setState({commentToolTipOpen: !self.state.commentToolTipOpen})
-                         }} target={"comment-" + index.indexId} placement="bottom"
+                         }} target={target} placement="bottom"
                          modifiers={{flip: {behavior: ['bottom']}}}>
                     {elements}
                 </Tooltip>
             );
         }
         return toolTip;
+    }
+
+
+    /**
+     * 从评论中获取现在登录用户的评论，如果没有则返回null
+     * @return {BrandReportComment|null}
+     */
+    getUserComment() {
+        // 测试用UserID
+        let userId = "wujunxian";
+
+        for (let i = 0; i < this.props.comments.length; i++) {
+            if (this.props.comments[i].userId === userId) {
+                return this.props.comments[i];
+            }
+        }
+
+        return null;
+    }
+
+    onCommentChange(newVal) {
+        this.props.onCommentUpdate(this.props.index, newVal);
     }
 
     render() {
@@ -282,7 +332,8 @@ class IndexTableRow extends React.Component {
                     <IndexTableRow key={i} brandReport={this.props.brandReport} comments={this.props.comments}
                                    index={childIndices[i]} indices={this.props.indices}
                                    industryStatistics={this.props.industryStatistics}
-                                   enableCommentEditing={this.props.enableCommentEditing}/>
+                                   enableCommentEditing={this.props.enableCommentEditing}
+                                   onCommentUpdate={this.props.onCommentUpdate}/>
                 )
             }
             return (
@@ -306,6 +357,7 @@ class IndexTableRow extends React.Component {
             // 显示图标，移动则会显示tooltip，显示更多数据
             let icons = [];
             let toolTips = [];
+            let popovers = [];
 
             if (typeof indexData !== "undefined") {
                 // 统计数据ToolTip构造
@@ -320,15 +372,63 @@ class IndexTableRow extends React.Component {
                     }
                 }
 
-                // 评论Tooltip构造
+                // 评论Tooltip与图标构造
                 if (typeof this.props.comments !== 'undefined') {
-                    let toolTip = this.getCommentToolTip(this.props.comments, index);
-                    if (toolTip !== null) {
+                    if (this.props.enableCommentEditing) {
+                        let comment = this.getUserComment();
+                        let dataComment = undefined;
+                        if (comment !== null) {
+                            dataComment = comment.dataComment[index.indexId];
+                        }
+
+                        // 若不存在评论，则显示添加按钮，否则显示修改按钮与ToolTip
+                        if (typeof dataComment !== 'undefined') {
+                            icons.splice(0, 0,
+                                <span id={"edit-comment-" + index.indexId} className="fa-stack" style={{
+                                    verticalAlign: "top",
+                                    cursor: "pointer",
+                                }} title={"修改评论"}>
+                                    <i className="fas fa-comment fa-stack-2x"/>
+                                    <i className="fas fa-pencil-alt fa-stack-1x fa-inverse"/>
+                                </span>,
+                            );
+                            toolTips.push(
+                                this.getCommentToolTip(this.props.comments, index, "edit-comment-" + index.indexId)
+                            );
+                        } else {
+                            icons.splice(0, 0,
+                                <span id={"edit-comment-" + index.indexId} className="fa-stack" title={"添加评论"}
+                                      style={{
+                                          verticalAlign: "top",
+                                          cursor: "pointer",
+                                          display: this.state.hover && this.props.enableCommentEditing ? null : "none"
+                                      }}>
+                                    <i style={{color: "#00ff1b"}} className="fas fa-comment fa-stack-2x"/>
+                                    <i className="fas fa-plus fa-stack-1x fa-inverse"/>
+                                </span>,
+                            );
+                        }
+
+                        // 添加编辑框
+                        popovers.push(
+                            <CommentEditPopover index={index} show={this.state.commentEditPopoverOpen} toggle={
+                                () => {
+                                    this.setState({commentEditPopoverOpen: !this.state.commentEditPopoverOpen})
+                                }
+                            } target={"edit-comment-" + index.indexId} value={dataComment}
+                                                onChange={this.onCommentChange.bind(this)}/>
+                        )
+
+                    } else {
+                        let toolTip = this.getCommentToolTip(this.props.comments, index, "comment-" + index.indexId);
+                        if (toolTip !== null) {
+                            toolTips.push(toolTip);
+                        }
+                        // 仅当不编辑评论时显示当前评论的按钮
                         icons.push(
                             <em key={2} id={"comment-" + index.indexId} style={{verticalAlign: "top",}}
                                 className="fa fas fa-2x fa-comments"/>
                         );
-                        toolTips.push(toolTip);
                     }
                 }
 
@@ -343,18 +443,10 @@ class IndexTableRow extends React.Component {
                         <td className="index-value-td">
                             <span className="index-value">{indexData}{index.unit ? index.unit : null}</span>
                             <span className="float-right">
-                                {/*评论图标*/}
-                                <span className="fa-stack fa-1x" style={{
-                                    verticalAlign: "top",
-                                    cursor: "pointer",
-                                    display: this.state.hover && this.props.enableCommentEditing ? null : "none"
-                                }} title={"添加评论"}>
-                                    <i style={{color: "#00ff1b"}} className="fas fa-comment fa-stack-2x"/>
-                                    <i className="fas fa-plus fa-stack-1x fa-inverse"/>
-                                </span>
                                 {icons}
                             </span>
                             {toolTips}
+                            {popovers}
                         </td>
                     </tr>
                 );
@@ -363,4 +455,68 @@ class IndexTableRow extends React.Component {
             }
         }
     }
+}
+
+class CommentEditPopover extends React.Component {
+    static propTypes = {
+        value: PropTypes.string,
+        index: PropTypes.instanceOf(Index),
+        onChange: PropTypes.func,
+        show: PropTypes.bool,
+        target: PropTypes.string,
+        toggle: PropTypes.func,
+    };
+
+    constructor(props) {
+        super(props);
+
+        this.dirty = false;
+        this.state = {
+            commentVal: this.props.value,
+        }
+    }
+
+    componentWillReceiveProps(nextProps, nextContext) {
+        if (!this.dirty) {
+            this.setState({
+                commentVal: nextProps.value
+            });
+        }
+    }
+
+    onSuccess(e) {
+        this.dirty = false;
+        this.props.onChange(this.state.commentVal);
+        this.props.toggle(e);
+    }
+
+    onInputChange(e) {
+        this.dirty = true;
+        this.setState({
+            commentVal: e.target.value
+        })
+    }
+
+    onCancel(e) {
+        this.dirty = false;
+        this.props.toggle(e);
+    }
+
+    render() {
+        return (
+            <Popover placement="bottom" isOpen={this.props.show} target={this.props.target}
+                     toggle={this.props.toggle} modifiers={{flip: {behavior: ['bottom']}}}
+                     innerClassName="comment-edit-popover">
+                <PopoverHeader>评论{this.props.index.displayName}</PopoverHeader>
+                <PopoverBody>
+                    <Input type="text" value={this.state.commentVal} onChange={this.onInputChange.bind(this)}/>
+                    <div className="float-right">
+                        <Button color="success" onClick={this.onSuccess.bind(this)}>确认</Button>
+                        <Button onClick={this.onCancel.bind(this)}>取消</Button>
+                    </div>
+                </PopoverBody>
+            </Popover>
+        );
+    }
+
 }
