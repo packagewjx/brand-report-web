@@ -21,6 +21,7 @@ export default class BrandReportViewer extends React.Component {
         brand: PropTypes.instanceOf(Brand).isRequired,
         comments: PropTypes.arrayOf(PropTypes.instanceOf(BrandReportComment)),
         industryStatistics: PropTypes.instanceOf(IndustryStatistics),
+        enableCommentEditing: PropTypes.bool
     };
 
     constructor(props, context) {
@@ -55,7 +56,8 @@ export default class BrandReportViewer extends React.Component {
                 rows.push(
                     <IndexTableRow key={j} brandReport={this.props.brandReport} indices={this.props.indices}
                                    index={childIndices[j]} industryStatistics={this.props.industryStatistics}
-                                   comments={this.props.comments}/>
+                                   comments={this.props.comments}
+                                   enableCommentEditing={this.props.enableCommentEditing}/>
                 );
             }
             navItems.push(
@@ -72,7 +74,7 @@ export default class BrandReportViewer extends React.Component {
 
             tabPanes.push(
                 <TabPane key={i} tabId={i}>
-                    <Table responsive bordered>
+                    <Table responsive bordered className="index-table">
                         <tbody>
                         {rows}
                         </tbody>
@@ -98,14 +100,15 @@ export default class BrandReportViewer extends React.Component {
             this.props.comments.forEach(value => {
                 rows.push(
                     <tr>
-                        <td>{value.userId}</td>
+                        <td className="index-name-td">{value.userId}</td>
                         <td>{value.overallComment}</td>
                     </tr>
                 );
             });
             tabPanes.push(
                 <TabPane key={"comment"} tabId={"comment"}>
-                    <Table responsive bordered>
+                    {/*设置fixed，以定义某些列的宽度*/}
+                    <Table responsive bordered className="index-table">
                         <tbody>
                         {rows}
                         </tbody>
@@ -138,6 +141,12 @@ class IndexTableRow extends React.Component {
         brandReport: PropTypes.instanceOf(BrandReport).isRequired,
         comments: PropTypes.arrayOf(PropTypes.instanceOf(BrandReportComment)),
         industryStatistics: PropTypes.instanceOf(IndustryStatistics),
+        enableCommentEditing: PropTypes.bool,
+        /**
+         * 评论更新时候调用的函数，
+         * @type {function(Index, string)}
+         */
+        onCommentUpdate: PropTypes.func,
     };
 
     constructor(props, context) {
@@ -147,16 +156,21 @@ class IndexTableRow extends React.Component {
         this.getCommentToolTip = this.getCommentToolTip.bind(this);
         this.state = {
             statToolTipOpen: false,
-            commentToolTipOpen: false
+            commentToolTipOpen: false,
+            hover: false,
         }
     }
 
     shouldComponentUpdate(nextProps, nextState, nextContext) {
-        if (nextState.statToolTipOpen !== this.state.statToolTipOpen || nextState.commentToolTipOpen !== this.state.commentToolTipOpen) {
+        if (nextState.hover !== this.state.hover || nextState.statToolTipOpen !== this.state.statToolTipOpen || nextState.commentToolTipOpen !== this.state.commentToolTipOpen) {
             return true;
         }
         return !(nextProps.indices.length === this.props.indices.length && nextProps.index.indexId === this.props.index.indexId
             && nextProps.comments.length === this.props.comments.length && nextProps.brandReport.brandReportId === this.props.brandReport.brandReportId);
+    }
+
+    toggleOnHover() {
+        this.setState({hover: !this.state.hover});
     }
 
     /**
@@ -192,12 +206,7 @@ class IndexTableRow extends React.Component {
             case Index.TYPE_ENUM:
                 // reactstrap 8.0.0的bug:https://github.com/reactstrap/reactstrap/issues/1482
                 toolTip = (
-                    <Tooltip style={{
-                        pointerEvents: "none",
-                        position: "fixed",
-                        right: "-13px",
-                        width: "100px"
-                    }} key={1}
+                    <Tooltip innerClassName="stat-ratio-tooltip" key={1}
                              isOpen={self.state.statToolTipOpen}
                              toggle={() => {
                                  self.setState({statToolTipOpen: !self.state.statToolTipOpen})
@@ -211,12 +220,7 @@ class IndexTableRow extends React.Component {
                 let sum = typeof stat.sum === "number" ? stat.sum.toFixed(2) : "无数据";
                 let average = typeof stat.average === "number" ? stat.average.toFixed(2) : "无数据";
                 toolTip = (
-                    <Tooltip style={{
-                        pointerEvents: "none",
-                        position: "fixed",
-                        right: "-13px",
-                        width: "200px"
-                    }} key={1} isOpen={self.state.statToolTipOpen}
+                    <Tooltip innerClassName="stat-number-tooltip" key={1} isOpen={self.state.statToolTipOpen}
                              toggle={() => {
                                  self.setState({statToolTipOpen: !self.state.statToolTipOpen})
                              }} target={"stat-" + index.indexId} placement="bottom"
@@ -252,12 +256,7 @@ class IndexTableRow extends React.Component {
         elements.splice(elements.length - 1, 1);
         if (elements.length > 0) {
             toolTip = (
-                <Tooltip style={{
-                    pointerEvents: "none",
-                    position: "fixed",
-                    right: "-13px",
-                    width: "200px"
-                }} key={2} isOpen={self.state.commentToolTipOpen}
+                <Tooltip innerClassName="comment-tooltip" key={2} isOpen={self.state.commentToolTipOpen}
                          toggle={() => {
                              self.setState({commentToolTipOpen: !self.state.commentToolTipOpen})
                          }} target={"comment-" + index.indexId} placement="bottom"
@@ -282,16 +281,17 @@ class IndexTableRow extends React.Component {
                 rows.push(
                     <IndexTableRow key={i} brandReport={this.props.brandReport} comments={this.props.comments}
                                    index={childIndices[i]} indices={this.props.indices}
-                                   industryStatistics={this.props.industryStatistics}/>
+                                   industryStatistics={this.props.industryStatistics}
+                                   enableCommentEditing={this.props.enableCommentEditing}/>
                 )
             }
             return (
                 <tr>
-                    <td>
+                    <td className="index-name-td">
                         {index.displayName}
                     </td>
                     <td style={{padding: 0}}>
-                        <Table responsive>
+                        <Table responsive className="index-table">
                             <tbody>
                             {rows}
                             </tbody>
@@ -314,7 +314,8 @@ class IndexTableRow extends React.Component {
                     if (typeof stat !== "undefined") {
                         toolTips.push(this.getStatToolTip(indexData, index, stat));
                         icons.push(
-                            <em key={1} id={"stat-" + index.indexId} className="fa fas fa-lg fa-chart-bar"/>
+                            <em key={1} id={"stat-" + index.indexId} style={{verticalAlign: "top",}}
+                                className="fa fas fa-2x fa-chart-bar"/>
                         );
                     }
                 }
@@ -324,7 +325,8 @@ class IndexTableRow extends React.Component {
                     let toolTip = this.getCommentToolTip(this.props.comments, index);
                     if (toolTip !== null) {
                         icons.push(
-                            <em key={2} id={"comment-" + index.indexId} className="fa fas fa-lg fa-comments"/>
+                            <em key={2} id={"comment-" + index.indexId} style={{verticalAlign: "top",}}
+                                className="fa fas fa-2x fa-comments"/>
                         );
                         toolTips.push(toolTip);
                     }
@@ -334,13 +336,22 @@ class IndexTableRow extends React.Component {
                 indexData = IndexTableRow.getDisplayableData(indexData);
 
                 return (
-                    <tr>
-                        <td>
+                    <tr onMouseEnter={this.toggleOnHover.bind(this)} onMouseLeave={this.toggleOnHover.bind(this)}>
+                        <td className="index-name-td">
                             {index.displayName}
                         </td>
-                        <td>
-                            {indexData}{index.unit ? index.unit : null}
+                        <td className="index-value-td">
+                            <span className="index-value">{indexData}{index.unit ? index.unit : null}</span>
                             <span className="float-right">
+                                {/*评论图标*/}
+                                <span className="fa-stack fa-1x" style={{
+                                    verticalAlign: "top",
+                                    cursor: "pointer",
+                                    display: this.state.hover && this.props.enableCommentEditing ? null : "none"
+                                }} title={"添加评论"}>
+                                    <i style={{color: "#00ff1b"}} className="fas fa-comment fa-stack-2x"/>
+                                    <i className="fas fa-plus fa-stack-1x fa-inverse"/>
+                                </span>
                                 {icons}
                             </span>
                             {toolTips}

@@ -41,6 +41,6 @@ export default class BrandReportPage extends React.Component {
     render() {
         return <BrandReportViewer indices={this.state.indices} brandReport={this.state.brandReport}
                                   brand={this.state.brand} industryStatistics={this.state.industryStatistics}
-                                  comments={this.state.comments}/>
+                                  comments={this.state.comments} enableCommentEditing={true}/>
     }
 }

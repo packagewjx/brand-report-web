@@ -1,0 +1,34 @@
+table.index-table {
+  table-layout: fixed;
+
+  td.index-name-td {
+    width: 100px;
+  }
+
+  td.index-value-td {
+    span.index-value {
+      vertical-align: middle;
+    }
+  }
+}
+
+%base-report-tooltip {
+  pointer-events: none;
+  position: fixed;
+  right: -13px;
+}
+
+.stat-ratio-tooltip {
+  @extend %base-report-tooltip;
+  width: 100px;
+}
+
+.stat-number-tooltip {
+  @extend %base-report-tooltip;
+  width: 200px;
+}
+
+.comment-tooltip {
+  @extend %base-report-tooltip;
+  width: 300px;
+}
