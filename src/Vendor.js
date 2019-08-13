@@ -14,6 +14,8 @@ import 'simple-line-icons/css/simple-line-icons.css';
 // Weather Icons
 import 'weather-icons/css/weather-icons.min.css';
 import 'weather-icons/css/weather-icons-wind.min.css';
+// React Table
+import 'react-table/react-table.css'
 
 window.jQuery = require('jquery');
 window.$ = window.jQuery;
