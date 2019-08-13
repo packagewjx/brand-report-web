@@ -23,6 +23,10 @@ const Menu = [
         ]
     },
     {
+        name: '品牌报告',
+        path: '/brand-report'
+    },
+    {
         name: 'Widgets',
         icon: 'icon-grid',
         path: '/widgets',

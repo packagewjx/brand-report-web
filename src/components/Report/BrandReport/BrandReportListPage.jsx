@@ -2,6 +2,8 @@ import React from 'react';
 import ContentWrapper from "../../Layout/ContentWrapper";
 import BrandReportTable from "./BrandReportTable";
 import PropTypes from 'prop-types';
+import {toast, ToastContainer} from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css';
 import {
     Card,
     CardBody,
@@ -14,8 +16,11 @@ import {
     Input,
     FormFeedback
 } from 'reactstrap'
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import {faPlus, faClipboardList, faSync} from '@fortawesome/free-solid-svg-icons'
 import Brand from "../../Model/Brand";
 import ApiClient from "../../Utils/ApiClient";
+import $ from 'jquery';
 
 export default class BrandReportListPage extends React.Component {
     constructor(props) {
@@ -25,7 +30,9 @@ export default class BrandReportListPage extends React.Component {
         this.state = {
             modal: false,
             brands: []
-        }
+        };
+
+        this.tableApi = {};
     }
 
     toggleModal() {
@@ -33,8 +40,30 @@ export default class BrandReportListPage extends React.Component {
     }
 
     onConfirmBuild(arg) {
-        console.log(arg);
-        this.setState({modal: false})
+        let url = process.env.REACT_APP_BACKEND_BASE_URL + "/brand-report";
+        this.toggleModal();
+        toast("正在构建报告，请稍候", {autoClose: 2000});
+        $.ajax({
+            url: url,
+            data: {
+                build: true,
+                "brand-id": arg.brandId,
+                "period": arg.period,
+                "period-time-number": arg.periodTimeNumber,
+                "year": arg.year
+            },
+            method: "GET"
+        }).done((value, status, xhr) => {
+            ApiClient.insert("brand-report", value).done(value => {
+                toast("构建成功，刷新以查看新报告", {type: "success", position: "top-right", autoClose: 2000});
+            }).fail((xhr, status, err) => {
+                console.log(err);
+                toast("报告保存失败")
+            });
+        }).fail((xhr, status, err) => {
+            console.log(err);
+            toast("构建请求失败", {type: "danger", position: "top-right"});
+        });
     }
 
     componentDidMount() {
@@ -53,20 +82,23 @@ export default class BrandReportListPage extends React.Component {
                 <Card>
                     <CardBody>
                         {/*构建报告按钮与对话框*/}
-                        <Button onClick={this.toggleModal}>
-                            构建报告
+                        <Button title="创建报告" onClick={this.toggleModal}>
+                            <span className="fa-layers fa-fw fa-2x">
+                                <FontAwesomeIcon icon={faClipboardList} transform="left-4"/>
+                                <FontAwesomeIcon icon={faPlus} transform="shrink-6 right-8"/>
+                            </span>
                         </Button>
                         <BuildReportModal display={this.state.modal} toggleModal={this.toggleModal}
                                           brands={this.state.brands} onSubmit={this.onConfirmBuild.bind(this)}/>
                         {' '}
-                        <Button>
-                            刷新
+                        <Button title="刷新" onClick={() => {
+                            this.tableApi.refresh()
+                        }}>
+                            <FontAwesomeIcon fixedWidth size="2x" icon={faSync}/>
                         </Button>
-                    </CardBody>
-                </Card>
-                <Card>
-                    <CardBody>
-                        <BrandReportTable/>
+                        <p/>
+                        <BrandReportTable api={this.tableApi}/>
+                        <ToastContainer/>
                     </CardBody>
                 </Card>
             </ContentWrapper>
