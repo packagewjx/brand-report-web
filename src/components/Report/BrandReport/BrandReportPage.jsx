@@ -2,15 +2,31 @@ import React from 'react'
 import Brand from "../../Model/Brand";
 import BrandReport from "../../Model/BrandReport";
 import IndustryStatistics from "../../Model/IndustryStatistics";
-import {ABrand, ABrandReport, ABrandReportComment, AnIndustryStatistics, IndexArray} from './data';
 import BrandReportViewer from "./BrandReportViewer";
-import Index from "../../Model/Index";
+import PropTypes from 'prop-types';
 import BrandReportComment from "../../Model/BrandReportComment";
+import ApiClient from "../../Utils/ApiClient";
+import {toast} from 'react-toastify';
+import Index from "../../Model/Index";
+import {withRouter} from 'react-router-dom';
 
 /**
  * 处理参数与网络请求的品牌报告页
+ *
+ * 有两种方式传入报告，第一是通过react router的location的state的brandReport传入，第二是通过props传入，或者通过设置id，来获取
+ * 报告
  */
-export default class BrandReportPage extends React.Component {
+class BrandReportPage extends React.Component {
+    static propTypes = {
+        brandReport: PropTypes.instanceOf(BrandReport),
+        reportId: PropTypes.string,
+    };
+
+    static defaultProps = {
+        brandReport: null,
+        reportId: "",
+    };
+
     constructor(props) {
         super(props);
 
@@ -19,23 +35,113 @@ export default class BrandReportPage extends React.Component {
             brandReport: new BrandReport(),
             indices: [],
             comments: [],
-            industryStatistics: new IndustryStatistics()
+            industryStatistics: new IndustryStatistics(),
+            loading: true
         };
     }
 
     componentDidMount() {
-        let indices = [];
-        for (let i = 0; i < IndexArray.length; i++) {
-            indices.push(Index.fromJson(IndexArray[i]));
-        }
+        console.log(this);
 
-        this.setState({
-            brand: Brand.fromJson(ABrand),
-            brandReport: BrandReport.fromJson(ABrandReport),
-            indices: indices,
-            industryStatistics: IndustryStatistics.fromJson(AnIndustryStatistics),
-            comments: [ABrandReportComment]
-        })
+        // 若成功，返回brandReport
+        // 若失败，则返回status, xhr, err
+        let reportPromise = new Promise((resolve, reject) => {
+            // 获取报告顺序：props, location.state.brandReport, props.reportId, location.match.params.id
+            if (this.props.brandReport !== null) {
+                resolve(this.props.brandReport);
+            } else if (typeof this.props.location.state !== "undefined" && typeof this.props.location.state.brandReport !== "undefined") {
+                resolve(this.props.location.state.brandReport);
+            } else {
+                let id = "";
+                if (typeof this.props.reportId !== "undefined" && this.props.reportId !== "") {
+                    id = this.props.reportId;
+                } else if (typeof this.props.match.params.id !== "undefined" && this.props.match.params.id !== "") {
+                    id = this.props.match.params.id;
+                } else {
+                    toast("参数错误", {type: "error"});
+                    reject();
+                }
+                ApiClient.get("brand-report", id)
+                    .then((brandReport) => {
+                        resolve(brandReport);
+                    })
+                    .catch((status, xhr, err) => {
+                        toast("获取报告失败", {type: "error"});
+                        console.error(status, xhr, err);
+                        reject(status, xhr, err);
+                    });
+            }
+        });
+
+        reportPromise
+            .then((report) => {
+                report = BrandReport.fromJson(report);
+                let result = {
+                    indices: [],
+                    brand: new Brand(),
+                    industryStatistics: new IndustryStatistics(),
+                    comments: [],
+                };
+                // 获取指标，品牌，行业统计，与评论数据
+                let indexPromise = ApiClient.getAll("index")
+                    .then((response) => {
+                        let indices = [];
+                        for (let i = 0; i < response.length; i++) {
+                            indices.push(Index.fromJson(response[i]));
+                        }
+                        result.indices = indices;
+                    });
+
+                let brandPromise = ApiClient.get("brand", report.brandId)
+                    .then((brand) => {
+                        brand = Brand.fromJson(brand);
+                        result.brand = brand;
+                        return brand;
+                    })
+                    .catch((status, xhr, err) => {
+                        toast("获取品牌信息失败", {type: "error"});
+                        console.log(status, xhr, err);
+                    })
+                    .then((brand) => {
+                        // 有了品牌之后才能获取行业统计
+                        let example = new IndustryStatistics();
+                        example.industry = brand.industry;
+                        ApiClient.getAllByExample("industry-statistics", example)
+                            .then((response) => {
+                                result.industryStatistics = IndustryStatistics.fromJson(response);
+                            });
+                    }).catch((status, xhr, err) => {
+                        toast("获取行业数据失败", {type: "error"});
+                        console.log(status, xhr, err);
+                    });
+
+                let commentExample = new BrandReportComment();
+                commentExample.brandReportId = report.reportId;
+                let commentPromise = ApiClient.getAllByExample("brand-report-comment", commentExample)
+                    .then((response) => {
+                        let comments = [];
+                        for (let i = 0; i < response.length; i++) {
+                            comments[i] = BrandReportComment.fromJson(response[i]);
+                        }
+                        result.comments = comments;
+                    })
+                    .catch((status, xhr, err) => {
+                        toast("获取评论数据失败", {type: "error"});
+                        console.log(status, xhr, err);
+                    });
+
+                Promise.all([brandPromise, commentPromise, indexPromise])
+                    .then(() => {
+                        this.setState({
+                            brand: result.brand,
+                            brandReport: report,
+                            indices: result.indices,
+                            comments: result.comments,
+                            industryStatistics: result.industryStatistics,
+                            loading: false
+                        })
+                    });
+            });
     }
 
     onCommentUpdate(index, value) {
@@ -65,9 +171,19 @@ export default class BrandReportPage extends React.Component {
     }
 
     render() {
-        return <BrandReportViewer indices={this.state.indices} brandReport={this.state.brandReport}
-                                  brand={this.state.brand} industryStatistics={this.state.industryStatistics}
-                                  comments={this.state.comments} enableCommentEditing={true}
-                                  onDataCommentUpdate={this.onCommentUpdate.bind(this)}/>
+        if (this.state.loading) {
+            return (
+                <div>
+                    读取中
+                </div>
+            )
+        } else {
+            return <BrandReportViewer indices={this.state.indices} brandReport={this.state.brandReport}
+                                      brand={this.state.brand} industryStatistics={this.state.industryStatistics}
+                                      comments={this.state.comments} enableCommentEditing={true}
+                                      onDataCommentUpdate={this.onCommentUpdate.bind(this)}/>;
+        }
     }
 }
+
+export default withRouter(BrandReportPage);

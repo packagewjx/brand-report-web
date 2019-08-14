@@ -6,6 +6,8 @@ import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import {faEye, faTrash} from '@fortawesome/free-solid-svg-icons'
 import ApiClient from "../../Utils/ApiClient";
 import BrandReport from "../../Model/BrandReport";
+import {Link} from 'react-router-dom'
+import {toast} from 'react-toastify'
 
 export default class BrandReportTable extends React.Component {
     static propTypes = {
@@ -36,21 +38,25 @@ export default class BrandReportTable extends React.Component {
     fetchData(arg) {
         this.setState({loading: true});
         ApiClient.getAllByExample("brand-report", arg)
-            .done((response, status, xhr) => {
-                if (status === "success") {
-                    this.setState({data: response, loading: false});
-                }
+            .then((response) => {
+                this.setState({data: response, loading: false});
+            })
+            .catch((status, xhr, err) => {
+                console.error("获取报告失败");
+                console.error(status, xhr, err);
             });
         ApiClient.getAll("brand")
-            .done((response, status) => {
-                if (status === "success") {
-                    let brandMap = {};
-                    for (let i = 0; i < response.length; i++) {
-                        brandMap[response[i].brandId] = response[i];
-                    }
-                    this.setState({brandMap: brandMap})
+            .then((brands) => {
+                let brandMap = {};
+                for (let i = 0; i < brands.length; i++) {
+                    brandMap[brands[i].brandId] = brands[i];
                 }
+                this.setState({brandMap: brandMap})
             })
+            .catch((status, xhr, err) => {
+                console.error("获取品牌失败");
+                console.error(status, xhr, err);
+            });
     }
 
     onViewButtonClick(row) {
@@ -66,11 +72,21 @@ export default class BrandReportTable extends React.Component {
     }
 
     deleteBrandReport() {
-        console.log(this.state.deleteReport);
-        this.setState({
-            deleteReport: undefined,
-            deleteModal: false
-        })
+        this.setState({deleteModal: false});
+        ApiClient.delete("brand-report", this.state.deleteReport.reportId)
+            .then((response) => {
+                toast("删除成功", {type: "success", autoClose: 3000});
+                this.fetchData(this.props.arg);
+                this.setState({
+                    deleteReport: undefined,
+                });
+            })
+            .catch((status, xhr, err) => {
+                toast("删除失败", {type: "success"});
+                this.setState({
+                    deleteReport: undefined,
+                });
+            })
     }
 
     toggleDeleteModal() {
@@ -177,7 +193,6 @@ export default class BrandReportTable extends React.Component {
                     defaultPageSize={10}
                 />
                 <Modal isOpen={this.state.deleteModal} toggle={this.toggleDeleteModal}>
-                    <ModalHeader toggle={this.toggleDeleteModal}>Modal title</ModalHeader>
                     <ModalBody>
                         {typeof this.state.deleteReport !== "undefined" ?
                             "确定要删除" + this.state.brandMap[this.state.deleteReport.brandId].brandName
@@ -190,6 +205,7 @@ export default class BrandReportTable extends React.Component {
                         <Button color="secondary" onClick={this.toggleDeleteModal}>否</Button>
                     </ModalFooter>
                 </Modal>
+
             </div>
         );
 
@@ -208,13 +224,20 @@ class OperationButtons extends React.Component {
     }
 
     render() {
+        let viewLink = {
+            pathname: "/brand-report/" + this.props.row.original.reportId,
+            state: {
+                brandReport: this.props.row.original
+            }
+        };
+
         return (
             <span>
-                <Button title="查看报告" onClick={() => {
-                    this.props.onViewButtonClick(this.props.row);
-                }}>
-                    <FontAwesomeIcon icon={faEye}/>
-                </Button>
+                <Link to={viewLink}>
+                    <Button title="查看报告">
+                        <FontAwesomeIcon icon={faEye}/>
+                    </Button>
+                </Link>
                 <Button title="删除报告" onClick={() => {
                     this.props.onDeleteButtonClick(this.props.row);
                 }}>

@@ -54,12 +54,14 @@ export default class BrandReportListPage extends React.Component {
             },
             method: "GET"
         }).done((value, status, xhr) => {
-            ApiClient.insert("brand-report", value).done(value => {
-                toast("构建成功，刷新以查看新报告", {type: "success", position: "top-right", autoClose: 2000});
-            }).fail((xhr, status, err) => {
-                console.log(err);
-                toast("报告保存失败")
-            });
+            ApiClient.insert("brand-report", value)
+                .then(() => {
+                    toast("构建成功，刷新以查看新报告", {type: "success", position: "top-right", autoClose: 2000});
+                })
+                .catch((status, xhr, err) => {
+                    console.log(err);
+                    toast("报告保存失败")
+                });
         }).fail((xhr, status, err) => {
             console.log(err);
             toast("构建请求失败", {type: "danger", position: "top-right"});
@@ -68,11 +70,17 @@ export default class BrandReportListPage extends React.Component {
 
     componentDidMount() {
         // 获取品牌列表
-        ApiClient.getAll('brand').done((response, status) => {
-            if (status === 'success') {
-                this.setState({brands: response})
-            }
-        });
+        ApiClient.getAll('brand')
+            .then((response) => {
+                let brands = [];
+                for (let i = 0; i < response.length; i++) {
+                    brands.push(Brand.fromJson(response[i]));
+                }
+                this.setState({brands: brands})
+            })
+            .catch((xhr, status, err) => {
+                console.log(xhr, status, err);
+            });
     }
 
     render() {
