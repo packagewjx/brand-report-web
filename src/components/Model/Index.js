@@ -13,83 +13,19 @@ export default class Index {
         return Object.assign(new Index(), json);
     }
 
-    _indexId;
+    indexId;
 
-    get indexId() {
-        return this._indexId;
-    }
+    displayName;
 
-    set indexId(value) {
-        this._indexId = value;
-    }
+    parentIndexId;
 
-    get displayName() {
-        return this._displayName;
-    }
+    type;
 
-    set displayName(value) {
-        this._displayName = value;
-    }
+    period;
 
-    get parentIndexId() {
-        return this._parentIndexId;
-    }
+    description;
 
-    set parentIndexId(value) {
-        this._parentIndexId = value;
-    }
+    unit;
 
-    get type() {
-        return this._type;
-    }
-
-    set type(value) {
-        this._type = value;
-    }
-
-    get period() {
-        return this._period;
-    }
-
-    set period(value) {
-        this._period = value;
-    }
-
-    get description() {
-        return this._description;
-    }
-
-    set description(value) {
-        this._description = value;
-    }
-
-    get unit() {
-        return this._unit;
-    }
-
-    set unit(value) {
-        this._unit = value;
-    }
-
-    get annotations() {
-        return this._annotations;
-    }
-
-    set annotations(value) {
-        this._annotations = value;
-    }
-
-    _displayName;
-
-    _parentIndexId;
-
-    _type;
-
-    _period;
-
-    _description;
-
-    _unit;
-
-    _annotations;
+    annotations;
 }

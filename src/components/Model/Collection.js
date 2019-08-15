@@ -3,54 +3,14 @@ export default class Collection {
         return Object.assign(new Collection(), json);
     }
 
-    _collectionId;
+    collectionId;
 
-    _year;
+    year;
 
-    _periodTimeNumber;
+    periodTimeNumber;
 
-    _period;
+    period;
 
-    _data;
+    data;
 
-
-    get collectionId() {
-        return this._collectionId;
-    }
-
-    set collectionId(value) {
-        this._collectionId = value;
-    }
-
-    get year() {
-        return this._year;
-    }
-
-    set year(value) {
-        this._year = value;
-    }
-
-    get periodTimeNumber() {
-        return this._periodTimeNumber;
-    }
-
-    set periodTimeNumber(value) {
-        this._periodTimeNumber = value;
-    }
-
-    get period() {
-        return this._period;
-    }
-
-    set period(value) {
-        this._period = value;
-    }
-
-    get data() {
-        return this._data;
-    }
-
-    set data(value) {
-        this._data = value;
-    }
 }
