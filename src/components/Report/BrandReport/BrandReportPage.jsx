@@ -41,8 +41,6 @@ class BrandReportPage extends React.Component {
     }
 
     componentDidMount() {
-        console.log(this);
-
         // 若成功，返回brandReport
         // 若失败，则返回status, xhr, err
         let reportPromise = new Promise((resolve, reject) => {
@@ -106,17 +104,28 @@ class BrandReportPage extends React.Component {
                         // 有了品牌之后才能获取行业统计
                         let example = new IndustryStatistics();
                         example.industry = brand.industry;
-                        ApiClient.getAllByExample("industry-statistics", example)
-                            .then((response) => {
-                                result.industryStatistics = IndustryStatistics.fromJson(response);
-                            });
-                    }).catch((status, xhr, err) => {
+                        example.total = undefined;
+                        example.period = report.period;
+                        example.periodTimeNumber = report.periodTimeNumber;
+                        example.year = report.year;
+                        return ApiClient.getAllByExample("industry-statistics", example)
+                    })
+                    .then((response) => {
+                        if (response.length > 0) {
+                            result.industryStatistics = IndustryStatistics.fromJson(response[0]);
+                        }
+                    })
+                    .catch((status, xhr, err) => {
                         toast("获取行业数据失败", {type: "error"});
-                        console.log(status, xhr, err);
+                        console.error(status, xhr, err);
                     });
 
                 let commentExample = new BrandReportComment();
                 commentExample.brandReportId = report.reportId;
+                commentExample.userId = undefined;
+                commentExample.dataComment = undefined;
+                commentExample.overallComment = undefined;
+                commentExample.commentId = undefined;
                 let commentPromise = ApiClient.getAllByExample("brand-report-comment", commentExample)
                     .then((response) => {
                         let comments = [];
@@ -127,7 +136,7 @@ class BrandReportPage extends React.Component {
                     })
                     .catch((status, xhr, err) => {
                         toast("获取评论数据失败", {type: "error"});
-                        console.log(status, xhr, err);
+                        console.error(status, xhr, err);
                     });
 
                 Promise.all([brandPromise, commentPromise, indexPromise])
