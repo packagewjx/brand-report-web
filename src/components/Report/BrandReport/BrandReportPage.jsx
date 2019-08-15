@@ -6,9 +6,10 @@ import BrandReportViewer from "./BrandReportViewer";
 import PropTypes from 'prop-types';
 import BrandReportComment from "../../Model/BrandReportComment";
 import ApiClient from "../../Utils/ApiClient";
-import {toast} from 'react-toastify';
+import {toast, ToastContainer} from 'react-toastify';
 import Index from "../../Model/Index";
 import {withRouter} from 'react-router-dom';
+import {getCurrentUserId} from "../../Utils/UserUtils";
 
 /**
  * 处理参数与网络请求的品牌报告页
@@ -153,30 +154,63 @@ class BrandReportPage extends React.Component {
             });
     }
 
-    onCommentUpdate(index, value) {
-        // 测试用
-        let userId = "wujunxian";
+    onDataCommentUpdate(index, value) {
+        this.updateMyComment(index, value);
+    }
+
+    /**
+     *
+     * @param index 若为null，则修改整体评价，否则修改具体评价
+     * @param value 评价内容
+     */
+    updateMyComment(index, value) {
+        let userId = getCurrentUserId();
 
         let comments = this.state.comments;
         let myComment = null;
+        let pos = 0;
         for (let i = 0; i < comments.length; i++) {
             if (comments[i].userId === userId) {
                 myComment = comments[i];
+                pos = i;
                 break;
             }
         }
 
         if (myComment === null) {
-            // 找不到的话则新建一个
+            // 找不到的话则新建一个，并插入
             myComment = new BrandReportComment();
             myComment.dataComment = {};
             myComment.userId = userId;
             myComment.brandReportId = this.props.brandReport.reportId;
-            comments.push(myComment);
+            if (index === null) {
+                myComment.overallComment = value;
+            } else {
+                myComment.dataComment[index.indexId] = value;
+            }
+            ApiClient.insert("brand-report-comment", myComment)
+                .then((response) => {
+                    comments.push(BrandReportComment.fromJson(response));
+                    toast("评论修改成功", {type: "success", autoClose: 2000});
+                    this.setState({comments: comments});
+                });
+        } else {
+            if (index === null) {
+                myComment.overallComment = value;
+            } else {
+                myComment.dataComment[index.indexId] = value;
+            }
+            ApiClient.update("brand-report-comment", myComment, myComment.commentId)
+                .then((response) => {
+                    comments[pos] = BrandReportComment.fromJson(response);
+                    toast("评论修改成功", {type: "success", autoClose: 2000});
+                    this.setState({comments: comments});
+                })
         }
+    }
 
-        myComment.dataComment[index.indexId] = value;
-        this.setState({comments: comments});
+    onOverallCommentUpdate(value) {
+        this.updateMyComment(null, value);
     }
 
     render() {
@@ -187,10 +221,15 @@ class BrandReportPage extends React.Component {
                 </div>
             )
         } else {
-            return <BrandReportViewer indices={this.state.indices} brandReport={this.state.brandReport}
-                                      brand={this.state.brand} industryStatistics={this.state.industryStatistics}
-                                      comments={this.state.comments} enableCommentEditing={true}
-                                      onDataCommentUpdate={this.onCommentUpdate.bind(this)}/>;
+            return (
+                <>
+                    <BrandReportViewer indices={this.state.indices} brandReport={this.state.brandReport}
+                                       brand={this.state.brand} industryStatistics={this.state.industryStatistics}
+                                       comments={this.state.comments} enableCommentEditing={true}
+                                       onDataCommentUpdate={this.onDataCommentUpdate.bind(this)}
+                                       onOverallCommentUpdate={this.onOverallCommentUpdate.bind(this)}/>
+                    <ToastContainer/>
+                </>);
         }
     }
 }

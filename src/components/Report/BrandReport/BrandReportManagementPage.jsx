@@ -3,7 +3,6 @@ import ContentWrapper from "../../Layout/ContentWrapper";
 import BrandReportTable from "./BrandReportTable";
 import PropTypes from 'prop-types';
 import {toast, ToastContainer} from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css';
 import {
     Button,
     Card,

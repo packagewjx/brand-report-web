@@ -16,6 +16,8 @@ import 'weather-icons/css/weather-icons.min.css';
 import 'weather-icons/css/weather-icons-wind.min.css';
 // React Table
 import 'react-table/react-table.css'
+// react-toastify
+import 'react-toastify/dist/ReactToastify.css';
 
 window.jQuery = require('jquery');
 window.$ = window.jQuery;

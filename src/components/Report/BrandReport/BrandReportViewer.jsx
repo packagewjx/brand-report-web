@@ -5,27 +5,28 @@ import BrandReportComment from "../../Model/BrandReportComment";
 import IndustryStatistics from "../../Model/IndustryStatistics";
 import Brand from "../../Model/Brand";
 import React from 'react'
-import {getIndexOfParent, getRootIndices} from "../../Utils/IndexUtils";
 import {
     Button,
     Card,
+    Input,
     Nav,
     NavItem,
     NavLink,
+    Popover,
+    PopoverBody,
+    PopoverHeader,
     TabContent,
     Table,
     TabPane,
-    Tooltip,
-    Popover,
-    PopoverHeader,
-    PopoverBody,
-    Input
+    Tooltip
 } from 'reactstrap'
+import {getIndexOfParent, getRootIndices} from "../../Utils/IndexUtils";
 import ContentWrapper from "../../Layout/ContentWrapper";
 import classnames from 'classnames';
+import {getCurrentUserId} from "../../Utils/UserUtils";
 
 /**
- * 仅仅显示传入的品牌报告的页面组件
+ * 显示与编辑品牌报告的页面组件
  */
 export default class BrandReportViewer extends React.Component {
     static propTypes = {
@@ -41,6 +42,10 @@ export default class BrandReportViewer extends React.Component {
          * @type {function(Index, string)}
          */
         onDataCommentUpdate: PropTypes.func,
+        /**
+         * 当总体评价更新时候的回调函数，传入参数为本次登录用户的评价
+         */
+        onOverallCommentUpdate: PropTypes.func,
     };
 
     constructor(props, context) {
@@ -50,6 +55,7 @@ export default class BrandReportViewer extends React.Component {
         this.state = {
             activeTab: 0,
             toolTips: [],
+            editMyComment: false
         }
     }
 
@@ -61,11 +67,18 @@ export default class BrandReportViewer extends React.Component {
         }
     }
 
-    onCommentChange(index, value) {
+    onOverallCommentChange(value) {
+        this.props.onOverallCommentUpdate(value);
+    }
+
+    onDataCommentChange(index, value) {
         this.props.onDataCommentUpdate(index, value);
     }
 
     render() {
+        // 测试用UserId
+        let userId = getCurrentUserId();
+
         let rootIndices = getRootIndices(this.props.indices);
 
         let navItems = [];
@@ -81,7 +94,7 @@ export default class BrandReportViewer extends React.Component {
                                    index={childIndices[j]} industryStatistics={this.props.industryStatistics}
                                    comments={this.props.comments}
                                    enableCommentEditing={this.props.enableCommentEditing}
-                                   onCommentUpdate={this.onCommentChange.bind(this)}/>
+                                   onCommentUpdate={this.onDataCommentChange.bind(this)}/>
                 );
             }
             navItems.push(
@@ -121,13 +134,49 @@ export default class BrandReportViewer extends React.Component {
                 </NavItem>
             );
             let rows = [];
-            this.props.comments.forEach(value => {
-                rows.push(
-                    <tr>
-                        <td className="index-name-td">{value.userId}</td>
-                        <td>{value.overallComment}</td>
-                    </tr>
-                );
+            this.props.comments.forEach(comment => {
+                if (comment.userId === userId) {
+                    rows.push(
+                        <tr key={comment.userId}>
+                            <td className="index-name-td">{comment.userId}</td>
+                            <td>
+                                {this.state.editMyComment ?
+                                    <CommentEditor value={comment.overallComment}
+                                                   onCancel={() => this.setState({editMyComment: false})}
+                                                   onChange={(value) => {
+                                                       this.onOverallCommentChange(value);
+                                                       this.setState({editMyComment: false})
+                                                   }}/>
+                                    :
+                                    <>
+                                        {comment.overallComment}
+                                        <span id={"edit-overall-comment-"}
+                                              className="fa-stack float-right"
+                                              style={{
+                                                  verticalAlign: "top",
+                                                  cursor: "pointer",
+                                              }} title={"修改评论"}
+                                              onClick={() => {
+                                                  this.setState({editMyComment: true});
+                                              }}>
+                                            <i className="fas fa-comment fa-stack-2x"/>
+                                            <i className="fas fa-pencil-alt fa-stack-1x fa-inverse"/>
+                                        </span>
+                                    </>
+                                }
+                            </td>
+                        </tr>
+                    );
+                } else {
+                    rows.push((
+                        <tr key={comment.userId}>
+                            <td className="index-name-td">{comment.userId}</td>
+                            <td>
+                                {comment.overallComment}
+                            </td>
+                        </tr>
+                    ))
+                }
             });
             tabPanes.push(
                 <TabPane key={"comment"} tabId={"comment"}>
@@ -186,15 +235,6 @@ class IndexTableRow extends React.Component {
             hover: false,
         }
     }
-
-    // shouldComponentUpdate(nextProps, nextState, nextContext) {
-    //     if (nextState.commentEditPopoverOpen !== this.state.commentToolTipOpen || nextState.hover !== this.state.hover
-    //         || nextState.statToolTipOpen !== this.state.statToolTipOpen || nextState.commentToolTipOpen !== this.state.commentToolTipOpen) {
-    //         return true;
-    //     }
-    //     return !(nextProps.indices.length === this.props.indices.length && nextProps.index.indexId === this.props.index.indexId
-    //         && nextProps.comments.length === this.props.comments.length && nextProps.brandReport.brandReportId === this.props.brandReport.brandReportId);
-    // }
 
     toggleOnHover() {
         this.setState({hover: !this.state.hover});
@@ -303,7 +343,7 @@ class IndexTableRow extends React.Component {
      */
     getUserComment() {
         // 测试用UserID
-        let userId = "wujunxian";
+        let userId = getCurrentUserId();
 
         for (let i = 0; i < this.props.comments.length; i++) {
             if (this.props.comments[i].userId === userId) {
@@ -319,7 +359,6 @@ class IndexTableRow extends React.Component {
     }
 
     render() {
-        let self = this;
         let data = this.props.brandReport.data;
         let index = this.props.index;
         let indices = this.props.indices;
@@ -384,7 +423,8 @@ class IndexTableRow extends React.Component {
                         // 若不存在评论，则显示添加按钮，否则显示修改按钮与ToolTip
                         if (typeof dataComment !== 'undefined') {
                             icons.splice(0, 0,
-                                <span id={"edit-comment-" + index.indexId} className="fa-stack" style={{
+                                <span key={"edit-comment-" + index.indexId} id={"edit-comment-" + index.indexId}
+                                      className="fa-stack" style={{
                                     verticalAlign: "top",
                                     cursor: "pointer",
                                 }} title={"修改评论"}>
@@ -397,7 +437,8 @@ class IndexTableRow extends React.Component {
                             );
                         } else {
                             icons.splice(0, 0,
-                                <span id={"edit-comment-" + index.indexId} className="fa-stack" title={"添加评论"}
+                                <span key={"edit-comment-" + index.indexId} id={"edit-comment-" + index.indexId}
+                                      className="fa-stack" title={"添加评论"}
                                       style={{
                                           verticalAlign: "top",
                                           cursor: "pointer",
@@ -411,7 +452,8 @@ class IndexTableRow extends React.Component {
 
                         // 添加编辑框
                         popovers.push(
-                            <CommentEditPopover index={index} show={this.state.commentEditPopoverOpen} toggle={
+                            <CommentEditPopover key={"edit-comment-" + index.indexId} index={index}
+                                                show={this.state.commentEditPopoverOpen} toggle={
                                 () => {
                                     this.setState({commentEditPopoverOpen: !this.state.commentEditPopoverOpen})
                                 }
@@ -519,4 +561,40 @@ class CommentEditPopover extends React.Component {
         );
     }
 
+}
+
+class CommentEditor extends React.Component {
+    static propTypes = {
+        onChange: PropTypes.func.isRequired,
+        onCancel: PropTypes.func.isRequired,
+        value: PropTypes.string,
+    };
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            value: this.props.value
+        }
+    }
+
+    componentWillReceiveProps(nextProps, nextContext) {
+        this.setState({
+            value: nextProps.value
+        })
+    }
+
+    render() {
+        return (
+            <div>
+                <Input type="textarea" name="comment" value={this.state.value} onChange={(e) => {
+                    this.setState({value: e.target.value})
+                }}/>
+                <Button color="success" onClick={() => {
+                    this.props.onChange(this.state.value)
+                }}>确认</Button>
+                <Button onClick={this.props.onCancel}>取消</Button>
+            </div>
+        );
+    }
 }
