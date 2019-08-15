@@ -5,43 +5,76 @@ import PropTypes from 'prop-types';
 import {toast, ToastContainer} from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
 import {
+    Button,
     Card,
     CardBody,
-    Button,
-    Modal,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
+    FormFeedback,
     FormGroup,
     Input,
-    FormFeedback
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader
 } from 'reactstrap'
+import {faClipboardList, faEye, faPlus, faSync, faTrash} from '@fortawesome/free-solid-svg-icons'
+import {Link} from 'react-router-dom'
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faPlus, faClipboardList, faSync} from '@fortawesome/free-solid-svg-icons'
 import Brand from "../../Model/Brand";
 import ApiClient from "../../Utils/ApiClient";
 import $ from 'jquery';
 
-export default class BrandReportListPage extends React.Component {
+export default class BrandReportManagementPage extends React.Component {
     constructor(props) {
         super(props);
 
-        this.toggleModal = this.toggleModal.bind(this);
+        this.toggleBuildModal = this.toggleBuildModal.bind(this);
+        this.toggleDeleteModal = this.toggleDeleteModal.bind(this);
         this.state = {
-            modal: false,
-            brands: []
+            buildModal: false,
+            brands: [],
+            deleteModal: false,
+            deleteReport: undefined,
         };
 
         this.tableApi = {};
     }
 
-    toggleModal() {
-        this.setState({modal: !this.state.modal})
+    toggleBuildModal() {
+        this.setState({buildModal: !this.state.buildModal})
+    }
+
+    onDeleteButtonClick(row) {
+        this.setState({
+            deleteReport: row.original,
+            deleteModal: true
+        });
+    }
+
+    deleteBrandReport() {
+        this.setState({deleteModal: false});
+        ApiClient.delete("brand-report", this.state.deleteReport.reportId)
+            .then((response) => {
+                toast("删除成功", {type: "success", autoClose: 3000});
+                this.fetchData(this.props.arg);
+                this.setState({
+                    deleteReport: undefined,
+                });
+            })
+            .catch((status, xhr, err) => {
+                toast("删除失败", {type: "success"});
+                this.setState({
+                    deleteReport: undefined,
+                });
+            })
+    }
+
+    toggleDeleteModal() {
+        this.setState({deleteModal: !this.state.deleteModal})
     }
 
     onConfirmBuild(arg) {
         let url = process.env.REACT_APP_BACKEND_BASE_URL + "/brand-report";
-        this.toggleModal();
+        this.toggleBuildModal();
         toast("正在构建报告，请稍候", {autoClose: 2000});
         $.ajax({
             url: url,
@@ -73,10 +106,13 @@ export default class BrandReportListPage extends React.Component {
         ApiClient.getAll('brand')
             .then((response) => {
                 let brands = [];
+                let brandMap = {};
                 for (let i = 0; i < response.length; i++) {
-                    brands.push(Brand.fromJson(response[i]));
+                    let brand = Brand.fromJson(response[i]);
+                    brands.push(brand);
+                    brandMap[brand.brandId] = brand;
                 }
-                this.setState({brands: brands})
+                this.setState({brands: brands, brandMap: brandMap})
             })
             .catch((xhr, status, err) => {
                 console.log(xhr, status, err);
@@ -84,19 +120,26 @@ export default class BrandReportListPage extends React.Component {
     }
 
     render() {
+        let additionalColumn = [
+            {
+                Header: "操作",
+                Cell: row => <OperationButtons row={row} onDeleteButtonClick={this.onDeleteButtonClick.bind(this)}/>
+            }
+        ];
+
         return (
             <ContentWrapper>
                 <h3>品牌报告管理</h3>
                 <Card>
                     <CardBody>
                         {/*构建报告按钮与对话框*/}
-                        <Button title="创建报告" onClick={this.toggleModal}>
+                        <Button title="创建报告" onClick={this.toggleBuildModal}>
                             <span className="fa-layers fa-fw fa-2x">
                                 <FontAwesomeIcon icon={faClipboardList} transform="left-4"/>
                                 <FontAwesomeIcon icon={faPlus} transform="shrink-6 right-8"/>
                             </span>
                         </Button>
-                        <BuildReportModal display={this.state.modal} toggleModal={this.toggleModal}
+                        <BuildReportModal display={this.state.buildModal} toggleModal={this.toggleBuildModal}
                                           brands={this.state.brands} onSubmit={this.onConfirmBuild.bind(this)}/>
                         {' '}
                         <Button title="刷新" onClick={() => {
@@ -105,10 +148,26 @@ export default class BrandReportListPage extends React.Component {
                             <FontAwesomeIcon fixedWidth size="2x" icon={faSync}/>
                         </Button>
                         <p/>
-                        <BrandReportTable api={this.tableApi}/>
+                        {/*品牌报告表*/}
+                        <BrandReportTable api={this.tableApi} additionalColumn={additionalColumn}/>
                         <ToastContainer/>
                     </CardBody>
                 </Card>
+                {/*删除窗口*/}
+                <Modal isOpen={this.state.deleteModal} toggle={this.toggleDeleteModal}>
+                    <ModalBody>
+                        {typeof this.state.deleteReport !== "undefined" ?
+                            "确定要删除" + this.state.brandMap[this.state.deleteReport.brandId].brandName
+                            + "在" + BrandReportTable.getTime(this.state.deleteReport)
+                            + "的品牌报告(ID:" + this.state.deleteReport.brandId + ")吗？"
+                            : null}
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button color="danger" onClick={this.deleteBrandReport.bind(this)}>是</Button>{' '}
+                        <Button color="secondary" onClick={this.toggleDeleteModal}>否</Button>
+                    </ModalFooter>
+                </Modal>
+                {/*删除窗口结束*/}
             </ContentWrapper>
         );
     }
@@ -276,4 +335,40 @@ class BuildReportModal extends React.Component {
         );
     }
 
+}
+
+// 操作按钮
+class OperationButtons extends React.Component {
+    static propTypes = {
+        onDeleteButtonClick: PropTypes.func,
+        row: PropTypes.object
+    };
+
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        let viewLink = {
+            pathname: "/brand-report/" + this.props.row.original.reportId,
+            state: {
+                brandReport: this.props.row.original
+            }
+        };
+
+        return (
+            <span>
+                <Link to={viewLink}>
+                    <Button title="查看报告">
+                        <FontAwesomeIcon icon={faEye}/>
+                    </Button>
+                </Link>
+                <Button title="删除报告" onClick={() => {
+                    this.props.onDeleteButtonClick(this.props.row);
+                }}>
+                    <FontAwesomeIcon icon={faTrash}/>
+                </Button>
+            </span>
+        );
+    }
 }

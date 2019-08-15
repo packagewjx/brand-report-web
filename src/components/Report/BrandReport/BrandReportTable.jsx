@@ -1,32 +1,29 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import ReactTable from 'react-table'
-import {Button, Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap'
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faEye, faTrash} from '@fortawesome/free-solid-svg-icons'
 import ApiClient from "../../Utils/ApiClient";
 import BrandReport from "../../Model/BrandReport";
-import {Link} from 'react-router-dom'
-import {toast} from 'react-toastify'
 
+/**
+ * 负责获取与显示品牌报告的表格，没有任何的操作
+ */
 export default class BrandReportTable extends React.Component {
     static propTypes = {
         arg: PropTypes.instanceOf(BrandReport),
-        notifyRefresh: PropTypes.func,
         api: PropTypes.object,
+        additionalColumn: PropTypes.array
     };
 
     static defaultProps = {
         arg: new BrandReport(),
         api: {},
+        additionalColumn: []
     };
 
     constructor(props) {
         super(props);
 
         this.fetchData = this.fetchData.bind(this);
-        this.toggleDeleteModal = this.toggleDeleteModal.bind(this);
-
         this.state = {
             data: [],
             brandMap: {},
@@ -37,60 +34,38 @@ export default class BrandReportTable extends React.Component {
 
     fetchData(arg) {
         this.setState({loading: true});
-        ApiClient.getAllByExample("brand-report", arg)
+        let p1 = ApiClient.getAllByExample("brand-report", arg)
             .then((response) => {
-                this.setState({data: response, loading: false});
+                let reports = [];
+                for (let i = 0; i < response.length; i++) {
+                    reports.push(BrandReport.fromJson(response[i]));
+                }
+                return reports;
             })
             .catch((status, xhr, err) => {
                 console.error("获取报告失败");
                 console.error(status, xhr, err);
             });
-        ApiClient.getAll("brand")
+        let p2 = ApiClient.getAll("brand")
             .then((brands) => {
                 let brandMap = {};
                 for (let i = 0; i < brands.length; i++) {
                     brandMap[brands[i].brandId] = brands[i];
                 }
-                this.setState({brandMap: brandMap})
+                return brandMap;
             })
             .catch((status, xhr, err) => {
                 console.error("获取品牌失败");
                 console.error(status, xhr, err);
             });
-    }
-
-    onViewButtonClick(row) {
-        console.log(this.props);
-        console.log(row);
-    }
-
-    onDeleteButtonClick(row) {
-        this.setState({
-            deleteReport: row.original,
-            deleteModal: true
-        });
-    }
-
-    deleteBrandReport() {
-        this.setState({deleteModal: false});
-        ApiClient.delete("brand-report", this.state.deleteReport.reportId)
-            .then((response) => {
-                toast("删除成功", {type: "success", autoClose: 3000});
-                this.fetchData(this.props.arg);
+        Promise.all([p1, p2])
+            .then(values => {
                 this.setState({
-                    deleteReport: undefined,
-                });
+                    data: values[0],
+                    brandMap: values[1],
+                    loading: false
+                })
             })
-            .catch((status, xhr, err) => {
-                toast("删除失败", {type: "success"});
-                this.setState({
-                    deleteReport: undefined,
-                });
-            })
-    }
-
-    toggleDeleteModal() {
-        this.setState({deleteModal: !this.state.deleteModal})
     }
 
     componentDidMount() {
@@ -176,74 +151,18 @@ export default class BrandReportTable extends React.Component {
                     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
                 }
             },
-            {
-                Header: "操作",
-                Cell: row => <OperationButtons row={row} onDeleteButtonClick={this.onDeleteButtonClick.bind(this)}
-                                               onViewButtonClick={this.onViewButtonClick.bind(this)}/>
-            }
+            ...this.props.additionalColumn
         ];
 
         return (
-            <div>
-                <ReactTable
-                    data={this.state.data}
-                    columns={columns}
-                    loading={this.state.loading}
-                    style={{textAlign: 'center', verticalAlign: 'center'}}
-                    defaultPageSize={10}
-                />
-                <Modal isOpen={this.state.deleteModal} toggle={this.toggleDeleteModal}>
-                    <ModalBody>
-                        {typeof this.state.deleteReport !== "undefined" ?
-                            "确定要删除" + this.state.brandMap[this.state.deleteReport.brandId].brandName
-                            + "在" + BrandReportTable.getTime(this.state.deleteReport)
-                            + "的品牌报告(ID:" + this.state.deleteReport.brandId + ")吗？"
-                            : null}
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button color="danger" onClick={this.deleteBrandReport.bind(this)}>是</Button>{' '}
-                        <Button color="secondary" onClick={this.toggleDeleteModal}>否</Button>
-                    </ModalFooter>
-                </Modal>
-
-            </div>
-        );
-
-    }
-}
-
-class OperationButtons extends React.Component {
-    static propTypes = {
-        onDeleteButtonClick: PropTypes.func,
-        onViewButtonClick: PropTypes.func,
-        row: PropTypes.object
-    };
-
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        let viewLink = {
-            pathname: "/brand-report/" + this.props.row.original.reportId,
-            state: {
-                brandReport: this.props.row.original
-            }
-        };
-
-        return (
-            <span>
-                <Link to={viewLink}>
-                    <Button title="查看报告">
-                        <FontAwesomeIcon icon={faEye}/>
-                    </Button>
-                </Link>
-                <Button title="删除报告" onClick={() => {
-                    this.props.onDeleteButtonClick(this.props.row);
-                }}>
-                    <FontAwesomeIcon icon={faTrash}/>
-                </Button>
-            </span>
+            <ReactTable
+                data={this.state.data}
+                columns={columns}
+                loading={this.state.loading}
+                style={{textAlign: 'center', verticalAlign: 'center'}}
+                defaultPageSize={10}
+            />
         );
     }
 }
+

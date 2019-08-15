@@ -1,15 +1,13 @@
-import React, {Suspense, lazy} from 'react';
-import {withRouter, Switch, Route, Redirect} from 'react-router-dom';
-import {TransitionGroup, CSSTransition} from 'react-transition-group';
-
+import React, {lazy, Suspense} from 'react';
+import {Redirect, Route, Switch, withRouter} from 'react-router-dom';
+import {CSSTransition, TransitionGroup} from 'react-transition-group';
 /* loader component for Suspense*/
 import PageLoader from './components/Common/PageLoader';
 
 import Base from './components/Layout/Base';
 import BasePage from './components/Layout/BasePage';
-import BrandReportViewer from "./components/Report/BrandReport/BrandReportViewer";
 import BrandReportPage from "./components/Report/BrandReport/BrandReportPage";
-import BrandReportListPage from "./components/Report/BrandReport/BrandReportListPage";
+import BrandReportManagementPage from "./components/Report/BrandReport/BrandReportManagementPage";
 // import BaseHorizontal from './components/Layout/BaseHorizontal';
 
 /* Used to render a lazy component with react-router */
@@ -238,7 +236,7 @@ const Routes = ({location}) => {
 
                                     <Route path="/forum" component={waitFor(ForumHome)}/>
 
-                                    <Route path="/brand-report" exact={true} component={BrandReportListPage}/>
+                                    <Route path="/brand-report" exact={true} component={BrandReportManagementPage}/>
                                     <Route path="/brand-report/:id" component={BrandReportPage}/>
 
                                     <Redirect to="/dashboardv1"/>
