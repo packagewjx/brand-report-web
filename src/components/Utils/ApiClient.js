@@ -54,12 +54,20 @@ export default class ApiClient {
         let param = {};
         for (let key in example) {
             if (example.hasOwnProperty(key)) {
+                // 非空的才发送
+                if (typeof example[key] === "undefined" || example[key] === "" || example[key] === null) {
+                    continue
+                }
+                // 去除开头的下划线
+                if (key.startsWith("_")) {
+                    key = key.substr(1);
+                }
                 // 将大写字符转换
                 let newKey = "";
                 for (let i = 0; i < key.length; i++) {
                     let char = key[i];
                     if (char <= 'Z' && char >= 'A') {
-                        newKey += '-' + char;
+                        newKey += '-' + char.toLowerCase();
                     } else {
                         newKey += char
                     }
@@ -67,9 +75,7 @@ export default class ApiClient {
                 param[newKey] = example[key];
             }
         }
-        return wrap($.get(BACKEND_BASE_ADDRESS + '/' + resource, {
-            data: param
-        }));
+        return wrap($.get(BACKEND_BASE_ADDRESS + '/' + resource, param));
     }
 
     /**
