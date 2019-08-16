@@ -5,12 +5,6 @@ export default class Brand {
 
     industry;
 
-    constructor() {
-        this.brandId = "";
-        this.brandName = "";
-        this.industry = "";
-    }
-
     static fromJson(json) {
         return Object.assign(new Brand(), json);
     }
