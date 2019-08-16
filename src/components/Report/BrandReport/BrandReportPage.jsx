@@ -114,6 +114,8 @@ class BrandReportPage extends React.Component {
                     .then((response) => {
                         if (response.length > 0) {
                             result.industryStatistics = IndustryStatistics.fromJson(response[0]);
+                        } else {
+                            result.industryStatistics = undefined;
                         }
                     })
                     .catch((status, xhr, err) => {

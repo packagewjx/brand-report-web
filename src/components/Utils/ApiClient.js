@@ -51,31 +51,15 @@ export default class ApiClient {
      * @return {Promise<unknown>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
      */
     static getAllByExample(resource, example) {
-        let param = {};
-        for (let key in example) {
-            if (example.hasOwnProperty(key)) {
-                // 非空的才发送
-                if (typeof example[key] === "undefined" || example[key] === "" || example[key] === null) {
-                    continue
-                }
-                // 去除开头的下划线
-                if (key.startsWith("_")) {
-                    key = key.substr(1);
-                }
-                // 将大写字符转换
-                let newKey = "";
-                for (let i = 0; i < key.length; i++) {
-                    let char = key[i];
-                    if (char <= 'Z' && char >= 'A') {
-                        newKey += '-' + char.toLowerCase();
-                    } else {
-                        newKey += char
-                    }
-                }
-                param[newKey] = example[key];
+        return wrap($.ajax({
+            url: BACKEND_BASE_ADDRESS + '/' + resource,
+            method: "GET",
+            dataType: "json",
+            data: {
+                action: "query",
+                example: JSON.stringify(example)
             }
-        }
-        return wrap($.get(BACKEND_BASE_ADDRESS + '/' + resource, param));
+        }));
     }
 
     /**
