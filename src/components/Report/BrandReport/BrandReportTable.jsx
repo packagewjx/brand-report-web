@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import ReactTable from 'react-table'
 import ApiClient from "../../Utils/ApiClient";
 import BrandReport from "../../Model/BrandReport";
+import {equalsObj} from "../../Utils/UtilFunctions";
 
 /**
  * 负责获取与显示品牌报告的表格，没有任何的操作
@@ -75,7 +76,9 @@ export default class BrandReportTable extends React.Component {
     }
 
     componentWillReceiveProps(nextProps, nextContext) {
-        this.fetchData(nextProps.arg);
+        if (!equalsObj(this.props.arg, nextProps.arg)) {
+            this.fetchData(nextProps.arg);
+        }
 
         // 填充API
         let self = this;

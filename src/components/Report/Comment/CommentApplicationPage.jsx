@@ -356,7 +356,6 @@ class AddApplicationModal extends React.Component {
     };
 
     render() {
-        console.log(this);
         if (typeof this.props.report === "undefined")
             return null;
         return (
