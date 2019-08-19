@@ -7,11 +7,11 @@ const Menu = [
         name: 'Dashboard',
         icon: 'icon-speedometer',
         translate: 'sidebar.nav.DASHBOARD',
-        label: { value: 3, color: 'success' },
+        label: {value: 3, color: 'success'},
         submenu: [{
-                name: 'Dashboard v1',
-                path: '/dashboardv1'
-            },
+            name: 'Dashboard v1',
+            path: '/dashboardv1'
+        },
             {
                 name: 'Dashboard v2',
                 path: '/dashboardv2'
@@ -24,13 +24,23 @@ const Menu = [
     },
     {
         name: '品牌报告',
-        path: '/brand-report'
+        icon: 'fa fa-clipboard-list',
+        submenu: [
+            {
+                name: '报告列表',
+                path: '/brand-report'
+            },
+            {
+                name: '专家评论申请',
+                path: '/comment-application',
+            },
+        ],
     },
     {
         name: 'Widgets',
         icon: 'icon-grid',
         path: '/widgets',
-        label: { value: 30, color: 'success' },
+        label: {value: 30, color: 'success'},
         translate: 'sidebar.nav.WIDGETS'
     },
     {
@@ -42,10 +52,10 @@ const Menu = [
         icon: 'icon-chemistry',
         translate: 'sidebar.nav.element.ELEMENTS',
         submenu: [{
-                name: 'Buttons',
-                path: '/buttons',
-                translate: 'sidebar.nav.element.BUTTON'
-            },
+            name: 'Buttons',
+            path: '/buttons',
+            translate: 'sidebar.nav.element.BUTTON'
+        },
             {
                 name: 'Notifications',
                 path: '/notifications',
@@ -102,13 +112,13 @@ const Menu = [
                 name: 'IconsFont',
                 path: '/icons-font',
                 translate: 'sidebar.nav.element.FONT_ICON',
-                label: { value: '+400', color: 'success' }
+                label: {value: '+400', color: 'success'}
             },
             {
                 name: 'IconsWeather',
                 path: '/icons-weather',
                 translate: 'sidebar.nav.element.WEATHER_ICON',
-                label: { value: '+100', color: 'success' }
+                label: {value: '+100', color: 'success'}
             },
             {
                 name: 'Colors',
@@ -122,10 +132,10 @@ const Menu = [
         icon: 'icon-note',
         translate: 'sidebar.nav.form.FORM',
         submenu: [{
-                name: 'Standard',
-                path: '/form-standard',
-                translate: 'sidebar.nav.form.STANDARD'
-            },
+            name: 'Standard',
+            path: '/form-standard',
+            translate: 'sidebar.nav.form.STANDARD'
+        },
             {
                 name: 'Extended',
                 path: '/form-extended',
@@ -155,10 +165,10 @@ const Menu = [
         icon: 'icon-graph',
         translate: 'sidebar.nav.chart.CHART',
         submenu: [{
-                name: 'Flot',
-                path: '/chart-flot',
-                translate: 'sidebar.nav.chart.FLOT'
-            },
+            name: 'Flot',
+            path: '/chart-flot',
+            translate: 'sidebar.nav.chart.FLOT'
+        },
             {
                 name: 'Radial',
                 path: '/chart-radial',
@@ -183,10 +193,10 @@ const Menu = [
         icon: 'icon-grid',
         translate: 'sidebar.nav.table.TABLE',
         submenu: [{
-                name: 'Standard',
-                path: '/table-standard',
-                translate: 'sidebar.nav.table.STANDARD'
-            },
+            name: 'Standard',
+            path: '/table-standard',
+            translate: 'sidebar.nav.table.STANDARD'
+        },
             {
                 name: 'Extended',
                 path: '/table-extended',
@@ -208,10 +218,10 @@ const Menu = [
         icon: 'icon-map',
         translate: 'idebar.nav.map.MAP',
         submenu: [{
-                name: 'Google',
-                path: '/map-google',
-                translate: 'sidebar.nav.map.GOOGLE'
-            },
+            name: 'Google',
+            path: '/map-google',
+            translate: 'sidebar.nav.map.GOOGLE'
+        },
             {
                 name: 'Vector',
                 path: '/map-vector',
@@ -228,10 +238,10 @@ const Menu = [
         icon: 'icon-doc',
         translate: 'sidebar.nav.pages.PAGES',
         submenu: [{
-                name: 'Login',
-                path: '/login',
-                translate: 'sidebar.nav.pages.LOGIN'
-            },
+            name: 'Login',
+            path: '/login',
+            translate: 'sidebar.nav.pages.LOGIN'
+        },
             {
                 name: 'Register',
                 path: '/register',
@@ -266,10 +276,10 @@ const Menu = [
         icon: 'icon-cup',
         translate: 'sidebar.nav.extra.EXTRA',
         submenu: [{
-                name: 'Mailbox',
-                path: '/mailbox',
-                translate: 'sidebar.nav.extra.MAILBOX',
-            },
+            name: 'Mailbox',
+            path: '/mailbox',
+            translate: 'sidebar.nav.extra.MAILBOX',
+        },
             {
                 name: 'Bug Tracker',
                 path: '/bug-tracker'
@@ -362,9 +372,9 @@ const Menu = [
         name: 'Blog',
         icon: 'icon-notebook',
         submenu: [{
-                name: 'List',
-                path: '/blog-list'
-            },
+            name: 'List',
+            path: '/blog-list'
+        },
             {
                 name: 'Post',
                 path: '/blog-post'
@@ -383,10 +393,10 @@ const Menu = [
         name: 'eCommerce',
         icon: 'icon-basket-loaded',
         submenu: [{
-                name: 'Orders',
-                path: '/ecommerce-orders',
-                label: { value: 10, color: 'success' },
-            },
+            name: 'Orders',
+            path: '/ecommerce-orders',
+            label: {value: 10, color: 'success'},
+        },
             {
                 name: 'Order-view',
                 path: '/ecommerce-order-view'

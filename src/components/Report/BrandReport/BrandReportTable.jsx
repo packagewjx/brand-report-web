@@ -11,13 +11,15 @@ export default class BrandReportTable extends React.Component {
     static propTypes = {
         arg: PropTypes.instanceOf(BrandReport),
         api: PropTypes.object,
-        additionalColumn: PropTypes.array
+        additionalColumn: PropTypes.array,
+        loading: PropTypes.bool,
     };
 
     static defaultProps = {
         arg: new BrandReport(),
         api: {},
-        additionalColumn: []
+        additionalColumn: [],
+        loading: false
     };
 
     constructor(props) {
@@ -158,9 +160,20 @@ export default class BrandReportTable extends React.Component {
             <ReactTable
                 data={this.state.data}
                 columns={columns}
-                loading={this.state.loading}
-                style={{textAlign: 'center', verticalAlign: 'center'}}
+                loading={this.state.loading || this.props.loading}
+                style={{textAlign: 'center'}}
                 defaultPageSize={10}
+                getTdProps={() => {
+                    return {
+                        // 使文字内容居中
+                        style: {
+                            'textAlign': 'center',
+                            'display': 'flex',
+                            'flexDirection': 'column',
+                            'justifyContent': 'center'
+                        }
+                    };
+                }}
             />
         );
     }
