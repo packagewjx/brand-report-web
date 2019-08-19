@@ -5,7 +5,7 @@ const BACKEND_BASE_ADDRESS = process.env.REACT_APP_BACKEND_BASE_URL;
 /**
  * 打包jQuery的defer对象为Promise
  * @param defer
- * @return {Promise<unknown>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
+ * @return {Promise} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
  */
 function wrap(defer) {
     return new Promise((resolve, reject) => {
@@ -20,6 +20,9 @@ function wrap(defer) {
             .fail((xhr, status, err) => {
                 reject(status, xhr, err);
             })
+    }).catch((status, xhr, err) => {
+        console.error("数据请求失败");
+        console.error(status, xhr, err);
     });
 }
 
@@ -29,7 +32,7 @@ export default class ApiClient {
      * 根据ID获取单个资源
      * @param resource 资源类型名
      * @param id 资源ID
-     * @return {Promise<unknown>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
+     * @return {Promise<Object>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
      */
     static get(resource, id) {
         return wrap($.get(BACKEND_BASE_ADDRESS + '/' + resource + "/" + id));
@@ -38,7 +41,7 @@ export default class ApiClient {
     /**
      * 获取所有资源
      * @param resource 资源类型名
-     * @return {Promise<unknown>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
+     * @return {Promise<Array>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
      */
     static getAll(resource) {
         return wrap($.get(BACKEND_BASE_ADDRESS + '/' + resource));
@@ -48,7 +51,7 @@ export default class ApiClient {
      * 根据查询条件获取该条件的所有资源
      * @param resource 资源类型名
      * @param example 条件，键值对。会成为URL的参数，因此尽量使用字符串类型作为值类型保证无错误
-     * @return {Promise<unknown>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
+     * @return {Promise<Array>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
      */
     static getAllByExample(resource, example) {
         return wrap($.ajax({
@@ -66,7 +69,7 @@ export default class ApiClient {
      * 根据ID删除单个资源
      * @param resource 资源类型名
      * @param id 资源ID
-     * @return {Promise<unknown>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
+     * @return {Promise} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
      */
     static delete(resource, id) {
         return wrap($.ajax({
@@ -80,7 +83,7 @@ export default class ApiClient {
      * @param resource 资源类型名
      * @param obj 更新后的资源对象
      * @param id 资源ID
-     * @return {Promise<unknown>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
+     * @return {Promise<Object>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
      */
     static update(resource, obj, id) {
         return wrap($.ajax({
@@ -97,7 +100,7 @@ export default class ApiClient {
      * 新增资源
      * @param resource　资源类型名
      * @param obj 新资源对象
-     * @return {Promise<unknown>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
+     * @return {Promise<Object>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
      */
     static insert(resource, obj) {
         return wrap($.ajax({
