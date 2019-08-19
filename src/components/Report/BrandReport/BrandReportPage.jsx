@@ -163,7 +163,7 @@ class BrandReportPage extends React.Component {
     /**
      *
      * @param index 若为null，则修改整体评价，否则修改具体评价
-     * @param value 评价内容
+     * @param value 评价内容。若为null则会删除对应的内容
      */
     updateMyComment(index, value) {
         let userId = getCurrentUserId();
@@ -184,11 +184,15 @@ class BrandReportPage extends React.Component {
             myComment = new BrandReportComment();
             myComment.dataComment = {};
             myComment.userId = userId;
-            myComment.brandReportId = this.props.brandReport.reportId;
+            myComment.brandReportId = this.state.brandReport.reportId;
             if (index === null) {
                 myComment.overallComment = value;
             } else {
-                myComment.dataComment[index.indexId] = value;
+                if (value !== null) {
+                    myComment.dataComment[index.indexId] = value;
+                } else {
+                    delete myComment.dataComment[index.indexId];
+                }
             }
             ApiClient.insert("brand-report-comment", myComment)
                 .then((response) => {
@@ -200,7 +204,11 @@ class BrandReportPage extends React.Component {
             if (index === null) {
                 myComment.overallComment = value;
             } else {
-                myComment.dataComment[index.indexId] = value;
+                if (value !== null) {
+                    myComment.dataComment[index.indexId] = value;
+                } else {
+                    delete myComment.dataComment[index.indexId];
+                }
             }
             ApiClient.update("brand-report-comment", myComment, myComment.commentId)
                 .then((response) => {
@@ -227,7 +235,7 @@ class BrandReportPage extends React.Component {
                 <>
                     <BrandReportViewer indices={this.state.indices} brandReport={this.state.brandReport}
                                        brand={this.state.brand} industryStatistics={this.state.industryStatistics}
-                                       comments={this.state.comments} enableCommentEditing={true}
+                                       comments={this.state.comments} enableCommentEditing={false}
                                        onDataCommentUpdate={this.onDataCommentUpdate.bind(this)}
                                        onOverallCommentUpdate={this.onOverallCommentUpdate.bind(this)}/>
                     <ToastContainer/>
