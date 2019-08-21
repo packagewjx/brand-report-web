@@ -166,17 +166,6 @@ export default class BrandReportTable extends React.Component {
                 loading={this.state.loading || this.props.loading}
                 style={{textAlign: 'center'}}
                 defaultPageSize={10}
-                getTdProps={() => {
-                    return {
-                        // 使文字内容居中
-                        style: {
-                            'textAlign': 'center',
-                            'display': 'flex',
-                            'flexDirection': 'column',
-                            'justifyContent': 'center'
-                        }
-                    };
-                }}
             />
         );
     }

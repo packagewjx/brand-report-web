@@ -34,6 +34,10 @@ const Menu = [
                 name: '专家评论申请',
                 path: '/comment-application',
             },
+            {
+                name: '专家评论管理',
+                path: '/brand-report-comment'
+            }
         ],
     },
     {

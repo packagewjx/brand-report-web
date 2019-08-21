@@ -9,6 +9,7 @@ import BasePage from './components/Layout/BasePage';
 import BrandReportPage from "./components/Report/BrandReport/BrandReportPage";
 import BrandReportManagementPage from "./components/Report/BrandReport/BrandReportManagementPage";
 import CommentApplicationPage from "./components/Report/Comment/CommentApplicationPage";
+import CommentManagementPage from "./components/Report/Comment/CommentManagementPage";
 // import BaseHorizontal from './components/Layout/BaseHorizontal';
 
 /* Used to render a lazy component with react-router */
@@ -240,6 +241,7 @@ const Routes = ({location}) => {
                                     <Route path="/brand-report" exact={true} component={BrandReportManagementPage}/>
                                     <Route path="/brand-report/:id" component={BrandReportPage}/>
                                     <Route path="/comment-application" component={CommentApplicationPage}/>
+                                    <Route path="/brand-report-comment" component={CommentManagementPage}/>
 
                                     <Redirect to="/dashboardv1"/>
                                 </Switch>

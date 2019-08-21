@@ -37,7 +37,8 @@ class BrandReportPage extends React.Component {
             indices: [],
             comments: [],
             industryStatistics: new IndustryStatistics(),
-            loading: true
+            loading: true,
+            enableCommentEditing: false
         };
     }
 
@@ -66,11 +67,16 @@ class BrandReportPage extends React.Component {
                     })
                     .catch((status, xhr, err) => {
                         toast("获取报告失败", {type: "error"});
-                        console.error(status, xhr, err);
                         reject(status, xhr, err);
                     });
             }
         });
+
+        // 设置是否编辑
+        let enableCommentEditing = false;
+        if (this.props.location.state && this.props.location.state.enableCommentEditing === true) {
+            enableCommentEditing = true;
+        }
 
         reportPromise
             .then((report) => {
@@ -99,7 +105,6 @@ class BrandReportPage extends React.Component {
                     })
                     .catch((status, xhr, err) => {
                         toast("获取品牌信息失败", {type: "error"});
-                        console.log(status, xhr, err);
                     })
                     .then((brand) => {
                         // 有了品牌之后才能获取行业统计
@@ -120,7 +125,6 @@ class BrandReportPage extends React.Component {
                     })
                     .catch((status, xhr, err) => {
                         toast("获取行业数据失败", {type: "error"});
-                        console.error(status, xhr, err);
                     });
 
                 let commentExample = new BrandReportComment();
@@ -139,7 +143,6 @@ class BrandReportPage extends React.Component {
                     })
                     .catch((status, xhr, err) => {
                         toast("获取评论数据失败", {type: "error"});
-                        console.error(status, xhr, err);
                     });
 
                 Promise.all([brandPromise, commentPromise, indexPromise])
@@ -150,7 +153,8 @@ class BrandReportPage extends React.Component {
                             indices: result.indices,
                             comments: result.comments,
                             industryStatistics: result.industryStatistics,
-                            loading: false
+                            loading: false,
+                            enableCommentEditing,
                         })
                     });
             });
@@ -235,7 +239,8 @@ class BrandReportPage extends React.Component {
                 <>
                     <BrandReportViewer indices={this.state.indices} brandReport={this.state.brandReport}
                                        brand={this.state.brand} industryStatistics={this.state.industryStatistics}
-                                       comments={this.state.comments} enableCommentEditing={false}
+                                       comments={this.state.comments}
+                                       enableCommentEditing={this.state.enableCommentEditing}
                                        onDataCommentUpdate={this.onDataCommentUpdate.bind(this)}
                                        onOverallCommentUpdate={this.onOverallCommentUpdate.bind(this)}/>
                     <ToastContainer/>

@@ -131,7 +131,7 @@ export default class BrandReportViewer extends React.Component {
                              onClick={() => {
                                  this.toggleTab("comment");
                              }}>
-                        行业专家评价
+                        总体评价
                     </NavLink>
                 </NavItem>
             );
