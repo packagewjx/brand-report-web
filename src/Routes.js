@@ -6,10 +6,6 @@ import PageLoader from './components/Common/PageLoader';
 
 import Base from './components/Layout/Base';
 import BasePage from './components/Layout/BasePage';
-import BrandReportPage from "./components/Report/BrandReport/BrandReportPage";
-import BrandReportManagementPage from "./components/Report/BrandReport/BrandReportManagementPage";
-import CommentApplicationPage from "./components/Report/Comment/CommentApplicationPage";
-import CommentManagementPage from "./components/Report/Comment/CommentManagementPage";
 // import BaseHorizontal from './components/Layout/BaseHorizontal';
 
 /* Used to render a lazy component with react-router */
@@ -101,6 +97,12 @@ const BlogArticleView = lazy(() => import('./components/Blog/BlogArticleView'));
 
 const ForumHome = lazy(() => import('./components/Forum/ForumHome'));
 
+const BrandReportPage = lazy(() => import("./components/Report/BrandReport/BrandReportPage"));
+const BrandReportManagementPage = lazy(() => import("./components/Report/BrandReport/BrandReportManagementPage"));
+const CommentApplicationPage = lazy(() => import("./components/Report/Comment/CommentApplicationPage"));
+const CommentManagementPage = lazy(() => import("./components/Report/Comment/CommentManagementPage"));
+const IndustryReportPage = lazy(() => import("./components/Report/IndustryReport/IndustryReportPage"));
+const IndustryReportManagementPage = lazy(() => import("./components/Report/IndustryReport/IndustryReportManagementPage"));
 
 // List of routes that uses the page layout
 // listed here to Switch between layouts
@@ -238,10 +240,15 @@ const Routes = ({location}) => {
 
                                     <Route path="/forum" component={waitFor(ForumHome)}/>
 
-                                    <Route path="/brand-report" exact={true} component={BrandReportManagementPage}/>
-                                    <Route path="/brand-report/:id" component={BrandReportPage}/>
-                                    <Route path="/comment-application" component={CommentApplicationPage}/>
-                                    <Route path="/brand-report-comment" component={CommentManagementPage}/>
+                                    {/*品牌报告*/}
+                                    <Route path="/brand-report" exact={true}
+                                           component={waitFor(BrandReportManagementPage)}/>
+                                    <Route path="/brand-report/:id" component={waitFor(BrandReportPage)}/>
+                                    <Route path="/comment-application" component={waitFor(CommentApplicationPage)}/>
+                                    <Route path="/brand-report-comment" component={waitFor(CommentManagementPage)}/>
+                                    <Route path="/industry-report/:id" component={waitFor(IndustryReportPage)}/>
+                                    <Route path="/industry-report" exact={true}
+                                           component={waitFor((IndustryReportManagementPage))}/>
 
                                     <Redirect to="/dashboardv1"/>
                                 </Switch>

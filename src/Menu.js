@@ -41,6 +41,11 @@ const Menu = [
         ],
     },
     {
+        name: '行业报告管理',
+        icon: 'fas fa-clipboard',
+        path: '/industry-report'
+    },
+    {
         name: 'Widgets',
         icon: 'icon-grid',
         path: '/widgets',

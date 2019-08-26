@@ -54,6 +54,9 @@ export default class ApiClient {
      * @return {Promise<Array>} then函数的参数即为所需对象，而catch函数的参数则为(textStatus, xhr, err)
      */
     static getAllByExample(resource, example) {
+        if (typeof example === "undefined") {
+            example = {};
+        }
         return wrap($.ajax({
             url: BACKEND_BASE_ADDRESS + '/' + resource,
             method: "GET",
