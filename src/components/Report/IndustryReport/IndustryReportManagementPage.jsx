@@ -1,5 +1,5 @@
 import React from 'react';
-import {withRouter} from 'react-router-dom';
+import {Link, withRouter} from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {equalsObj} from "../../Utils/UtilFunctions";
 import ApiClient from "../../Utils/ApiClient";
@@ -7,9 +7,9 @@ import IndustryReport from "../../Model/IndustryReport";
 import Brand from "../../Model/Brand";
 import ReactTable from 'react-table';
 import ContentWrapper from "../../Layout/ContentWrapper";
-import {toast} from 'react-toastify';
+import {toast, ToastContainer} from 'react-toastify';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faAsterisk, faChartBar, faClipboard} from '@fortawesome/free-solid-svg-icons'
+import {faAsterisk, faChartBar, faClipboard, faEye, faTrash} from '@fortawesome/free-solid-svg-icons'
 import $ from 'jquery'
 import {
     Button,
@@ -39,6 +39,7 @@ class IndustryReportManagementPage extends React.Component {
         super(props);
 
         this.toggleBuildModal = this.toggleBuildModal.bind(this);
+        this.onDelete = this.onDelete.bind(this);
 
         this.state = {
             data: new PageData([], []),
@@ -105,6 +106,7 @@ class IndustryReportManagementPage extends React.Component {
             if (status === "success") {
                 let data = this.state.data;
                 data.industryReports.push(IndustryReport.fromJson(response));
+                toast("构建成功", {type: "success"});
                 this.setState(data);
             } else {
                 console.error(xhr);
@@ -114,6 +116,23 @@ class IndustryReportManagementPage extends React.Component {
             console.error(err);
             toast("构建请求失败", {type: "danger", position: "top-right"});
         });
+    }
+
+    onDelete(industryReport) {
+        ApiClient.delete("industry-report", industryReport.industryReportId)
+            .then(() => {
+                toast("删除成功", {type: "success"});
+                let data = this.state.data;
+                for (let i = 0; i < data.industryReports.length; i++) {
+                    if (data.industryReports[i].industryReportId === industryReport.industryReportId) {
+                        data.industryReports.splice(i, 1);
+                    }
+                }
+                this.setState({data});
+            })
+            .catch((status, xhr, err) => {
+                toast("删除失败");
+            })
     }
 
     render() {
@@ -150,6 +169,40 @@ class IndustryReportManagementPage extends React.Component {
                             return "第" + row.original.periodTimeNumber + "季度";
                     }
                 }
+            },
+            {
+                Header: "创建时间",
+                id: "creatTime",
+                Cell: row => {
+                    let date = new Date(row.original.createTime);
+                    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+                }
+            },
+            {
+                Header: "操作",
+                id: "buttons",
+                Cell: row => {
+                    return (
+                        <span>
+                            <Link to={{
+                                pathname: "/industry-report/" + row.original.industryReportId,
+                                state: {
+                                    industryReport: row.original
+                                }
+                            }}>
+                                <Button title="查看">
+                                    <FontAwesomeIcon icon={faEye}/>
+                                </Button>
+                            </Link>
+                            {' '}
+                            <Button color="danger" title="删除" onClick={() => {
+                                this.onDelete(row.original)
+                            }}>
+                                <FontAwesomeIcon icon={faTrash}/>
+                            </Button>
+                        </span>
+                    )
+                }
             }
         ];
 
@@ -174,6 +227,7 @@ class IndustryReportManagementPage extends React.Component {
                         <ReactTable data={this.state.data.industryReports} columns={columns}/>
                     </CardBody>
                 </Card>
+                <ToastContainer/>
                 <BuildReportModal open={this.state.buildModal} toggle={this.toggleBuildModal}
                                   brands={this.state.data.brands} onConfirm={this.onBuild.bind(this)}/>
             </ContentWrapper>
