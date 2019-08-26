@@ -30,23 +30,28 @@ class IndustryReportPage extends React.Component {
         super(props);
 
         this.localPromise = this.localPromise.bind(this);
-
+        this._fetchData = this._fetchData.bind(this);
         this.state = {
-            loading: false,
-            industryReport: null,
-            brands: [],
-            indices: [],
+            data: null
         }
     }
 
-    componentWillReceiveProps(nextProps, nextContext) {
-        this.setState({loading: true});
+    componentDidMount() {
+        this._fetchData();
+    }
 
-        let industryReportPromise = this.localPromise("industryReport", nextProps)
+    componentDidUpdate(prevProps, prevState, prevContext) {
+        if (this.state.data === null) {
+            this._fetchData();
+        }
+    }
+
+    _fetchData() {
+        let industryReportPromise = this.localPromise("industryReport", this.props)
             .then((industryReport) => {
-                if (typeof industryReport === "undefined" || this.props.match.id !== nextProps.match.id) {
+                if (typeof industryReport === "undefined") {
                     return new Promise((resolve, reject) => {
-                        ApiClient.get("industry-report", nextProps.match.id)
+                        ApiClient.get("industry-report", this.props.match.id)
                             .then((response) => {
                                 resolve(IndustryReport.fromJson(response));
                             })
@@ -55,11 +60,11 @@ class IndustryReportPage extends React.Component {
                             });
                     });
                 } else {
-                    return industryReport;
+                    return IndustryReport.fromJson(industryReport);
                 }
             });
 
-        let brandPromise = this.localPromise("brands", nextProps)
+        let brandPromise = this.localPromise("brands", this.props)
             .then((brands) => {
                 if (typeof brands === "undefined") {
                     return new Promise((resolve, reject) => {
@@ -76,11 +81,15 @@ class IndustryReportPage extends React.Component {
                             })
                     })
                 } else {
-                    return brands;
+                    let b = [];
+                    for (let i = 0; i < brands.length; i++) {
+                        b.push(Brand.fromJson(brands[i]));
+                    }
+                    return b;
                 }
             });
 
-        let indexPromise = this.localPromise("indices", nextProps)
+        let indexPromise = this.localPromise("indices", this.props)
             .then((indices) => {
                 if (typeof indices === "undefined") {
                     return new Promise((resolve, reject) => {
@@ -102,25 +111,24 @@ class IndustryReportPage extends React.Component {
             });
 
         Promise.all([industryReportPromise, brandPromise, indexPromise])
-            .then((industryReport, brands, indices) => {
-                let state = {loading: false};
-                if (typeof industryReport !== "undefined") {
-                    state.industryReport = industryReport;
+            .then((result) => {
+                let data = new PageData();
+                if (typeof result[0] !== "undefined") {
+                    data.industryReport = result[0];
                 }
-                if (typeof brands !== "undefined") {
-                    state.brands = brands;
+                if (typeof result[1] !== "undefined") {
+                    data.brands = result[1];
                 }
-                if (typeof indices !== "undefined") {
-                    state.indices = indices;
+                if (typeof result[2] !== "undefined") {
+                    data.indices = result[2];
                 }
-                this.setState(state);
+                this.setState({data});
             });
     }
 
-
     localPromise(name, props) {
         return new Promise(resolve => {
-            let val = this.state[name];
+            let val = this.state.data === null ? undefined : this.state.data[name];
             if (typeof props.location.state[name] !== "undefined") {
                 if (!equalsObj(props.location.state[name], val)) {
                     resolve(props.location.state[name]);
@@ -142,7 +150,7 @@ class IndustryReportPage extends React.Component {
 
 
     render() {
-        if (this.state.loading) {
+        if (this.state.data === null) {
             return (
                 <div>
                     读取中
@@ -150,11 +158,36 @@ class IndustryReportPage extends React.Component {
             )
         } else {
             return (
-                <IndustryReportViewer industryReport={this.state.industryReport} brands={this.state.brands}
-                                      indices={this.state.indices}/>
+                <IndustryReportViewer industryReport={this.state.data.industryReport} brands={this.state.data.brands}
+                                      indices={this.state.data.indices}/>
             );
         }
     }
+
 }
 
 export default withRouter(IndustryReportPage);
+
+class PageData {
+    /**
+     * @type {Array.<Brand>}
+     */
+    brands;
+
+    /**
+     * @type {IndustryReport}
+     */
+    industryReport;
+
+    /**
+     * @type {Array.<Index>}
+     */
+    indices;
+
+
+    constructor(brands, industryReport, indices) {
+        this.brands = brands;
+        this.industryReport = industryReport;
+        this.indices = indices;
+    }
+}

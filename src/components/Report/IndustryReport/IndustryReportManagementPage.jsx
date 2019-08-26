@@ -42,8 +42,7 @@ class IndustryReportManagementPage extends React.Component {
         this.onDelete = this.onDelete.bind(this);
 
         this.state = {
-            data: new PageData([], []),
-            loading: false,
+            data: null,
             buildModal: false
         }
     }
@@ -52,8 +51,16 @@ class IndustryReportManagementPage extends React.Component {
         this._fetchData();
     }
 
+    static getDerivedStateFromProps(props, state) {
+        if (!equalsObj(props.query, state.prevQuery)) {
+            state.prevQuery = props.query;
+            state.data = null;
+            return state;
+        }
+    }
+
     componentDidUpdate(prevProps, prevState, prevContext) {
-        if (!equalsObj(prevProps, this.props)) {
+        if (this.state.data === null) {
             this._fetchData();
         }
     }
@@ -84,7 +91,7 @@ class IndustryReportManagementPage extends React.Component {
 
         Promise.all([reportPromise, brandPromise])
             .then(value => {
-                this.setState({data: new PageData(value[1], value[0]), loading: false})
+                this.setState({data: new PageData(value[1], value[0])})
             });
     }
 
@@ -136,6 +143,14 @@ class IndustryReportManagementPage extends React.Component {
     }
 
     render() {
+        if (this.state.data === null) {
+            return (
+                <div>
+                    读取中
+                </div>
+            )
+        }
+
         let columns = [
             {
                 Header: "ID",
@@ -187,7 +202,8 @@ class IndustryReportManagementPage extends React.Component {
                             <Link to={{
                                 pathname: "/industry-report/" + row.original.industryReportId,
                                 state: {
-                                    industryReport: row.original
+                                    industryReport: row.original,
+                                    brands: this.state.data.brands
                                 }
                             }}>
                                 <Button title="查看">

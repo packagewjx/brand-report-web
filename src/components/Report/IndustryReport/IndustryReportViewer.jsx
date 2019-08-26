@@ -15,7 +15,6 @@ export default class IndustryReportViewer extends React.Component {
         super(props);
     }
 
-
     render() {
         console.log(this.props);
         return (
