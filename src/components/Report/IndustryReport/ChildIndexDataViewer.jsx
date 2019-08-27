@@ -2,13 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Index from "../../Model/Index";
 import IndustryReport from "../../Model/IndustryReport";
-import {List} from "react-virtualized";
 
 export default class ChildIndexDataViewer extends React.Component {
     static propTypes = {
         indices: PropTypes.arrayOf(PropTypes.instanceOf(Index)).isRequired,
         rootIndex: PropTypes.instanceOf(Index).isRequired,
         industryReport: PropTypes.instanceOf(IndustryReport).isRequired,
+        height: PropTypes.number.isRequired
     };
 
     constructor(props) {
@@ -46,10 +46,8 @@ export default class ChildIndexDataViewer extends React.Component {
     render() {
         let childLeafIndices = ChildIndexDataViewer.getChildLeafIndices(this.props.indices, this.props.rootIndex);
 
-
         return (
-            <div>
-                <List></List>
+            <div style={{height: this.props.height}}>
             </div>
         );
     }

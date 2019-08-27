@@ -19,10 +19,30 @@ export default class IndustryReportViewer extends React.Component {
         super(props);
 
         this.toggleTab = this.toggleTab.bind(this);
+        this.setHeight = this.setHeight.bind(this);
 
         this.state = {
-            activeTab: undefined
+            activeTab: undefined,
+            height: 0
         }
+    }
+
+    componentDidMount() {
+        this.setHeight();
+        window.addEventListener("resize", ev => {
+            // 窗口重调整时进行调整
+            this.setHeight();
+        })
+    }
+
+    setHeight() {
+        let rect = this.divElement.getClientRects()[0];
+        let footerHeight = document.getElementsByClassName("footer-container")[0].clientHeight;
+        let newHeight = window.innerHeight - rect.top - footerHeight - 45;
+        if (this.state.height === rect.top) {
+            return
+        }
+        this.setState({height: newHeight});
     }
 
     toggleTab(tab) {
@@ -56,9 +76,9 @@ export default class IndustryReportViewer extends React.Component {
                 </NavItem>
             );
             tabPanes.push(
-                <TabPane tabId={rootIndices[i].indexId}>
+                <TabPane key={i} tabId={rootIndices[i].indexId}>
                     <ChildIndexDataViewer indices={this.props.indices} rootIndex={rootIndices[i]}
-                                          industryReport={this.props.industryReport}/>
+                                          industryReport={this.props.industryReport} height={this.state.height}/>
                 </TabPane>
             )
 
@@ -66,13 +86,17 @@ export default class IndustryReportViewer extends React.Component {
 
         return (
             <ContentWrapper>
-                <h3>{this.props.industryReport.industry}行业报告</h3>
+                <h3 id="page-heading">{this.props.industryReport.industry}行业报告</h3>
                 <Card>
                     <Nav tabs>
                         {navItems}
                     </Nav>
                     <TabContent activeTab={this.state.activeTab}>
-                        {tabPanes}
+                        <div id="tabs" style={{height: this.state.height}} ref={instance => {
+                            this.divElement = instance
+                        }}>
+                            {tabPanes}
+                        </div>
                     </TabContent>
                 </Card>
             </ContentWrapper>
