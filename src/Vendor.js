@@ -18,6 +18,8 @@ import 'weather-icons/css/weather-icons-wind.min.css';
 import 'react-table/react-table.css'
 // react-toastify
 import 'react-toastify/dist/ReactToastify.css';
+// react-virtualized
+import 'react-virtualized/styles.css';
 
 window.jQuery = require('jquery');
 window.$ = window.jQuery;
