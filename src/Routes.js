@@ -103,6 +103,7 @@ const CommentApplicationPage = lazy(() => import("./components/Report/Comment/Co
 const CommentManagementPage = lazy(() => import("./components/Report/Comment/CommentManagementPage"));
 const IndustryReportPage = lazy(() => import("./components/Report/IndustryReport/IndustryReportPage"));
 const IndustryReportManagementPage = lazy(() => import("./components/Report/IndustryReport/IndustryReportManagementPage"));
+const IndexManagementPage = lazy(() => import("./components/Index/IndexManagementPage"));
 
 // List of routes that uses the page layout
 // listed here to Switch between layouts
@@ -249,6 +250,9 @@ const Routes = ({location}) => {
                                     <Route path="/industry-report/:id" component={waitFor(IndustryReportPage)}/>
                                     <Route path="/industry-report" exact={true}
                                            component={waitFor((IndustryReportManagementPage))}/>
+
+                                    {/*指标管理*/}
+                                    <Route path="/index" exact={true} component={waitFor(IndexManagementPage)}/>
 
                                     <Redirect to="/dashboardv1"/>
                                 </Switch>

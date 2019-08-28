@@ -46,6 +46,11 @@ const Menu = [
         path: '/industry-report'
     },
     {
+        name: '指标管理',
+        icon: 'fas fa-sitemap',
+        path: '/index'
+    },
+    {
         name: 'Widgets',
         icon: 'icon-grid',
         path: '/widgets',

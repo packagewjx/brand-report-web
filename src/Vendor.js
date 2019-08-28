@@ -20,6 +20,8 @@ import 'react-table/react-table.css'
 import 'react-toastify/dist/ReactToastify.css';
 // react-virtualized
 import 'react-virtualized/styles.css';
+// react-sortable-tree
+import 'react-sortable-tree/style.css';
 
 window.jQuery = require('jquery');
 window.$ = window.jQuery;
