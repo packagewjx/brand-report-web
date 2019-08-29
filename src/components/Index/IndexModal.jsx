@@ -15,6 +15,8 @@ import {
 import StatisticsAnnotations from "../Model/IndexAnnotations/StatisticsAnnotations";
 import {InfoTooltip} from "../Utils/InfoTooltip";
 import {Button, Col, FormGroup, Input, Modal, ModalBody, ModalFooter, ModalHeader, Row} from 'reactstrap'
+import {ChartSetting} from "../Report/IndustryReport/ChildIndexDataViewer";
+import ChartAnnotations from "../Model/IndexAnnotations/ChartAnnotations";
 
 
 const TypeDisplayName = {
@@ -40,6 +42,15 @@ const scoreTypeDisplayName = {
     "score-ratio": "总值比例计分指标",
     "multiply": "乘数计分指标",
     "store": "分数存储指标"
+};
+
+const chartTypeDisplayName = {
+    [ChartSetting.TYPE_DEFAULT]: "自动选择",
+    [ChartSetting.TYPE_PIE]: "饼图",
+    [ChartSetting.TYPE_RADAR]: "雷达图",
+    [ChartSetting.TYPE_SINGLE_BAR]: "条形图",
+    [ChartSetting.TYPE_STACK_BAR]: "堆叠图",
+    [ChartSetting.TYPE_TABLE]: "表格"
 };
 
 export class IndexModal extends React.Component {
@@ -284,6 +295,41 @@ export class IndexModal extends React.Component {
         return scoreDisplayElement;
     }
 
+    static _getChartDisplayElement(chartAnnotation) {
+        if ("true" === chartAnnotation.chart_disable) {
+            return <span>不绘制图表</span>
+        } else {
+            return (
+                <>
+                    <Row>
+                        <Col xs={3}>绘图类型</Col>
+                        <Col>{chartTypeDisplayName[chartAnnotation.chart_type]}</Col>
+                    </Row>
+                    <Row>
+                        <Col xs={3}>
+                            绘制子指标总图
+                            <InfoTooltip>
+                                将子指标的集合起来，绘制到一个图中。<br/>
+                                仅支持雷达图、堆叠图、表格
+                            </InfoTooltip>
+                        </Col>
+                        <Col>{"true" === chartTypeDisplayName[chartAnnotation["chart_draw-all-sub-index"]] ? "是" : "否"}</Col>
+                    </Row>
+                    <Row>
+                        <Col xs={3}>指标颜色</Col>
+                        <Col>{chartAnnotation["chart_colors"] ? chartAnnotation["chart_colors"] : "未指定"}</Col>
+                    </Row>
+                    <Row>
+                        <Col xs={3}>宽高比例</Col>
+                        <Col>{chartAnnotation["chart_aspect-ratio"] ? chartAnnotation["chart_aspect-ratio"] : "未指定"}</Col>
+                    </Row>
+                </>
+            )
+        }
+
+
+    }
+
     render() {
         let index = this.props.index;
         if (index === null || !this.props.isOpen) {
@@ -292,6 +338,8 @@ export class IndexModal extends React.Component {
         let statAnnotation = StatisticsAnnotations.fromIndex(index);
         let scoreAnnotation = getScoreAnnotationFromIndex(index);
         let scoreDisplayElement = IndexModal._getScoreDisplayElement(scoreAnnotation);
+        let chartAnnotations = ChartAnnotations.fromIndex(index);
+        let chartDisplayElement = IndexModal._getChartDisplayElement(chartAnnotations);
 
         let displayElement = (
             <>
@@ -349,6 +397,7 @@ export class IndexModal extends React.Component {
                 <h4>计分设置</h4>
                 {scoreDisplayElement}
                 <h4>绘图设置</h4>
+                {chartDisplayElement}
             </>
         );
 
