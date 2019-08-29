@@ -53,3 +53,16 @@ export function equalsObj(oldData, newData) {
     //      走到这里,说明数组或者对象中所有元素都相同,返回true
     return true;
 }
+
+/**
+ * 生成随机由字母数字组成的ID
+ * @return {string} ID字符串
+ */
+export function generateRandomId() {
+    let res = "";
+    for (let i = 0; i < 10; i++) {
+        let number = Math.random() * 26;
+        res += String.fromCharCode('a'.charCodeAt(0) + number - number % 1)
+    }
+    return res
+}

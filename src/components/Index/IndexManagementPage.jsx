@@ -6,8 +6,9 @@ import {Button, Card} from 'reactstrap';
 import ApiClient from "../Utils/ApiClient";
 import Index from "../Model/Index";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faMinusCircle, faPlus, faPlusCircle, faStream, faSync} from '@fortawesome/free-solid-svg-icons';
+import {faAngleDoubleDown, faAngleDoubleUp, faInfo, faPlus, faStream, faSync} from '@fortawesome/free-solid-svg-icons';
 import 'react-sortable-tree/style.css';
+import {IndexModal} from "./IndexModal";
 
 const ROW_HEIGHT = 62;
 
@@ -15,12 +16,15 @@ class IndexManagementPage extends React.Component {
     constructor(props) {
         super(props);
         this._fetchData = this._fetchData.bind(this);
+        this.toggleThisNodeAllExpand = this.toggleThisNodeAllExpand.bind(this);
 
         this.state = {
             treeData: null,
             canDrag: false,
             allExpanded: false,
-            treeHeight: 0
+            treeHeight: 0,
+            operateIndex: null,
+            indexModalOpen: false
         }
     }
 
@@ -70,14 +74,13 @@ class IndexManagementPage extends React.Component {
                 }
 
                 let nodes = IndexManagementPage._getNodesFromIndices(indices);
+                this.doSetHeight = true;
                 this.setState({treeData: nodes});
             })
     }
 
     componentDidMount() {
         this._fetchData();
-        // 在获取数据后，更新树
-        this.doSetHeight = true;
     }
 
     componentDidUpdate(prevProps, prevState, prevContext) {
@@ -96,12 +99,52 @@ class IndexManagementPage extends React.Component {
         this.setState({allExpanded: !this.state.allExpanded, treeData})
     }
 
+    /**
+     *
+     * @param node {Node} 节点
+     * @param expanded {boolean} true则展开，false则关闭
+     */
+    toggleThisNodeAllExpand(node, expanded) {
+        node.expanded = expanded;
+        // noinspection JSValidateTypes
+        node.children = toggleExpandedForAll({treeData: node.children, expanded});
+        this.doSetHeight = true;
+        this.setState({treeData: this.state.treeData});
+    }
+
     onVisibilityToggle({treeData, node, expanded, path}) {
         this.doSetHeight = true;
     }
 
     generateNodeProps({node, path, treeIndex, lowerSiblingCounts, isSearchMatch, isSearchFocus}) {
+        return {
+            buttons: [
+                <Button size="xs" title="查看与编辑" onClick={() => {
+                    this.setState({indexModalOpen: true, operateIndex: node.original})
+                }}>
+                    <FontAwesomeIcon fixedWidth={true} icon={faInfo}/>
+                </Button>,
+                node.children.length === 0 ? null :
+                    node.expanded ?
+                        <Button size="xs" title="收起本节点" onClick={() => {
+                            this.toggleThisNodeAllExpand(node, false)
+                        }}>
+                            <FontAwesomeIcon fixedWidth={true} icon={faAngleDoubleUp}/>
+                        </Button> :
+                        <Button size="xs" title="展开本节点" onClick={() => {
+                            this.toggleThisNodeAllExpand(node, true);
+                        }}>
+                            <FontAwesomeIcon fixedWidth={true} icon={faAngleDoubleDown}/>
+                        </Button>,
+                <Button size="xs" title="新建子指标">
+                    <FontAwesomeIcon icon={faPlus} fixedWidth={true}/>
+                </Button>
+            ]
+        }
+    }
 
+    toggleIndexModal() {
+        this.setState({indexModalOpen: !this.state.indexModalOpen});
     }
 
     render() {
@@ -130,11 +173,11 @@ class IndexManagementPage extends React.Component {
                         <Button onClick={this.toggleAllExpanded.bind(this)}>
                             {this.state.allExpanded ?
                                 <span>
-                                    <FontAwesomeIcon icon={faMinusCircle}/>
+                                    <FontAwesomeIcon icon={faAngleDoubleUp}/>
                                     全部收起
                                 </span> :
                                 <span>
-                                    <FontAwesomeIcon icon={faPlusCircle}/>
+                                    <FontAwesomeIcon icon={faAngleDoubleDown}/>
                                     全部展开
                                 </span>
                             }
@@ -152,10 +195,10 @@ class IndexManagementPage extends React.Component {
                                 rowHeight={ROW_HEIGHT}
                             />
                         </div>
-
                     }
-
                 </Card>
+                <IndexModal index={this.state.operateIndex} isOpen={this.state.indexModalOpen}
+                            toggle={this.toggleIndexModal.bind(this)}/>
             </ContentWrapper>
         )
     }
