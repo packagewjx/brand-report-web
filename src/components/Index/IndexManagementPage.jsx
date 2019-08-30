@@ -19,6 +19,7 @@ class IndexManagementPage extends React.Component {
         this.toggleThisNodeAllExpand = this.toggleThisNodeAllExpand.bind(this);
 
         this.state = {
+            indices: null,
             treeData: null,
             canDrag: false,
             allExpanded: false,
@@ -75,7 +76,7 @@ class IndexManagementPage extends React.Component {
 
                 let nodes = IndexManagementPage._getNodesFromIndices(indices);
                 this.doSetHeight = true;
-                this.setState({treeData: nodes});
+                this.setState({treeData: nodes, indices});
             })
     }
 
@@ -198,7 +199,8 @@ class IndexManagementPage extends React.Component {
                     }
                 </Card>
                 <IndexModal index={this.state.operateIndex} isOpen={this.state.indexModalOpen}
-                            toggle={this.toggleIndexModal.bind(this)}/>
+                            toggle={this.toggleIndexModal.bind(this)} onChange={(v) => console.log(v)}
+                            indices={this.state.indices}/>
             </ContentWrapper>
         )
     }

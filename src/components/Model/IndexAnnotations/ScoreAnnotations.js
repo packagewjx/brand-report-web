@@ -1,4 +1,4 @@
-class ScoreIndexAnnotations {
+export class ScoreIndexAnnotations {
     /**
      * 注释中说明指标的分数计算类型
      */
@@ -43,14 +43,34 @@ export function getScoreAnnotationFromIndex(index) {
     }
 }
 
+/**
+ * 设置index的计分注解
+ * @param {Index} index
+ * @param {ScoreStoreIndexAnnotations| ScoreIndexAnnotations} scoreAnnotation
+ */
+export function setScoreAnnotationToIndex(index, scoreAnnotation) {
+    let original = getScoreAnnotationFromIndex(index);
+    if (original !== null) {
+        // 清除本来的Annotation
+        Object.keys(original).forEach(key => {
+            delete index.annotations[key];
+        });
+    }
+    Object.assign(index.annotations, scoreAnnotation);
+}
+
 export class BooleanScoreIndexAnnotations extends ScoreIndexAnnotations {
     "score_bool_true-score";
 
     "score_bool_false-score";
 
+    static getDefault() {
+        return new BooleanScoreIndexAnnotations("100", "0")
+    }
+
     /**
-     * @param {number} trueScore 真分数
-     * @param {number} falseScore 假分数
+     * @param {number|string} trueScore 真分数
+     * @param {number|string} falseScore 假分数
      */
     constructor(trueScore, falseScore) {
         super("bool");
@@ -70,6 +90,10 @@ export class BooleanScoreIndexAnnotations extends ScoreIndexAnnotations {
 
 export class EnumScoreIndexAnnotations extends ScoreIndexAnnotations {
     "score_enum_score-definition";
+
+    static getDefault() {
+        return new EnumScoreIndexAnnotations(new EnumScoreDefinition())
+    }
 
     /**
      * @return {EnumScoreDefinition}
@@ -113,7 +137,7 @@ export class EnumScoreDefinition {
      * 分数定义
      * @type {Map.<string, number>}
      */
-    definition;
+    definition = new Map();
 
     static fromJson(json) {
         let def = new EnumScoreDefinition();
@@ -124,6 +148,10 @@ export class EnumScoreDefinition {
 
 export class RatioScoreIndexAnnotations extends ScoreIndexAnnotations {
     "score_ratio_total-score";
+
+    static getDefault() {
+        return new RatioScoreIndexAnnotations("100")
+    }
 
     /**
      *
@@ -144,6 +172,10 @@ export class RatioScoreIndexAnnotations extends ScoreIndexAnnotations {
 }
 
 export class StepScoreIndexAnnotations extends ScoreIndexAnnotations {
+    static getDefault() {
+        return new StepScoreIndexAnnotations("false", new StepScoreDefinition());
+    }
+
     /**
      *
      * @param {string|boolean|undefined} lowerBoundExclude 是否排除下界
@@ -224,6 +256,10 @@ export class StepScoreDefinition {
 }
 
 export class MultiplyScoreIndexAnnotations extends ScoreIndexAnnotations {
+    static getDefault() {
+        return new MultiplyScoreIndexAnnotations("1");
+    }
+
     /**
      * @param {string|number}multiplier 乘法基准分。最终得分是指标的值乘以这个基准分
      */
@@ -244,6 +280,10 @@ export class MultiplyScoreIndexAnnotations extends ScoreIndexAnnotations {
 }
 
 export class ScoreRatioScoreIndexAnnotations extends ScoreIndexAnnotations {
+    static getDefault() {
+        return new ScoreRatioScoreIndexAnnotations("100");
+    }
+
     /**
      * @param {string|number} totalScore 比例型分数的满分，若值是1，则拿满分，否则按比例乘以总分得到
      */
@@ -264,24 +304,28 @@ export class ScoreRatioScoreIndexAnnotations extends ScoreIndexAnnotations {
 }
 
 export class LinearScoreIndexAnnotations extends ScoreIndexAnnotations {
+    static getDefault() {
+        return new LinearScoreIndexAnnotations("1", "0", undefined, undefined);
+    }
+
     /**
      *
      * @param {string|number} slope 线性函数斜截式的斜率
      * @param {string|number} intercept 线性函数斜截式的截距
-     * @param {string|number|undefined} xLowerBound x下界
-     * @param {string|number|undefined} xUpperBound x上界
+     * @param {string|number|undefined|null} xLowerBound x下界
+     * @param {string|number|undefined|null} xUpperBound x上界
      */
     constructor(slope, intercept, xLowerBound, xUpperBound) {
         super("linear");
         this.score_linear_slope = typeof slope === "number" ? "" + slope : slope.toString();
         this.score_linear_intercept = typeof intercept === "number" ? intercept : intercept.toString();
-        if (xLowerBound === undefined) {
-            this["score_linear_x-lower-bound"] = null;
+        if (xLowerBound === undefined || xLowerBound === null) {
+            this["score_linear_x-lower-bound"] = undefined;
         } else {
             this["score_linear_x-lower-bound"] = typeof xLowerBound === "number" ? "" + xLowerBound : xLowerBound.toString();
         }
-        if (xUpperBound === undefined) {
-            this["score_linear_x-upper-bound"] = null;
+        if (xUpperBound === undefined || xUpperBound === null) {
+            this["score_linear_x-upper-bound"] = undefined;
         } else {
             this["score_linear_x-upper-bound"] = typeof xUpperBound === "number" ? "" + xUpperBound : xUpperBound.toString();
         }
@@ -312,6 +356,9 @@ export class ScoreStoreIndexAnnotations {
      */
     "score_score-index-for";
 
+    static getDefault() {
+        return new ScoreStoreIndexAnnotations("");
+    }
 
     constructor(scoreRootIndex) {
         this["score_score-index-for"] = scoreRootIndex;
