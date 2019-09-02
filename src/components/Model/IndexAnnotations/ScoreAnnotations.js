@@ -239,16 +239,17 @@ export class StepScoreDefinition {
      * 划分数字区间的数组。值可以是数字，也可以是变量名的字符串，实现类将会读取该变量指代的数字
      * <p>
      * 根据本数组，划分的区间为：[负无穷，第一个元素), [第一个元素, 第二个元素), ... , [最后一个元素，正无穷]
-     * @type {Array.<string>}
+     * @type {Array.<string|number>}
      */
     intervalSplit = [];
 
     /**
      * 各个区间对应的分数值，大小应该是intervalSplit的大小加1。注意，这个分数值将会是使用intervalSplit划分出来的区间中，
      * 按顺序赋予区间分数，第一个区间赋予第一个分数，与intervalSplit的顺序无关。
-     * @type {Array.<string>}
+     * 至少有一个分数，代表取任何值的时候获得的
+     * @type {Array.<number>}
      */
-    intervalScore = [];
+    intervalScore = [0];
 
     static fromJson(json) {
         return Object.assign(new StepScoreDefinition(), json);
