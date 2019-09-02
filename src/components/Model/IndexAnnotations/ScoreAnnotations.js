@@ -135,14 +135,12 @@ export class EnumScoreIndexAnnotations extends ScoreIndexAnnotations {
 export class EnumScoreDefinition {
     /**
      * 分数定义
-     * @type {Map.<string, number>}
+     * @type {object}
      */
-    definition = new Map();
+    definition = {};
 
     static fromJson(json) {
-        let def = new EnumScoreDefinition();
-        def.definition = new Map(Object.entries(json.definition));
-        return def;
+        return Object.assign(new EnumScoreDefinition(), json);
     }
 }
 
