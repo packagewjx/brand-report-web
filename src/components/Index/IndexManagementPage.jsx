@@ -1,14 +1,15 @@
 import React from 'react';
 import {withRouter} from 'react-router-dom';
-import SortableTree, {getVisibleNodeCount, toggleExpandedForAll} from 'react-sortable-tree';
+import SortableTree, {getVisibleNodeCount, removeNodeAtPath, toggleExpandedForAll} from 'react-sortable-tree';
 import ContentWrapper from "../Layout/ContentWrapper";
-import {Button, Card} from 'reactstrap';
+import {Button, Card, Modal, ModalBody, ModalFooter, ModalHeader} from 'reactstrap';
 import ApiClient from "../Utils/ApiClient";
 import Index from "../Model/Index";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
     faAngleDoubleDown,
     faAngleDoubleUp,
+    faExclamationTriangle,
     faInfo,
     faPlus,
     faStream,
@@ -36,7 +37,11 @@ class IndexManagementPage extends React.Component {
             operateIndex: null,
             indexModalOpen: false,
             operateIndexPath: [],
-            createIndex: false
+            createIndex: false,
+            deleteModal: {
+                open: false,
+                indexNode: null,
+            }
         }
     }
 
@@ -72,7 +77,12 @@ class IndexManagementPage extends React.Component {
 
         for (let i = 0; i < toPut.length; i++) {
             let parentNode = map.get(toPut[i].original.parentIndexId);
-            parentNode.children.push(toPut[i]);
+            if (parentNode === undefined) {
+                toPut[i].title = "(父指标不存在)" + toPut[i].title;
+                result.push(toPut[i]);
+            } else {
+                parentNode.children.push(toPut[i]);
+            }
         }
         return result;
     }
@@ -152,7 +162,11 @@ class IndexManagementPage extends React.Component {
                     <Button size="xs" title="新建子指标" onClick={this.createIndex.bind(this, node.original.indexId, path)}>
                         <FontAwesomeIcon icon={faPlus} fixedWidth={true}/>
                     </Button> : null,
-                <Button size="xs" title="删除">
+                <Button size="xs" title="删除"
+                        onClick={() => this.setState({
+                            deleteModal: {open: true, indexNode: node},
+                            operateIndexPath: path
+                        })}>
                     <FontAwesomeIcon icon={faTrash} fixedWidth={true}/>
                 </Button>
             ]
@@ -249,6 +263,55 @@ class IndexManagementPage extends React.Component {
         })
     }
 
+    toggleDeleteModal() {
+        this.setState(prevState => {
+            let deleteModal = {
+                ...prevState.deleteModal,
+                open: !prevState.deleteModal.open
+            };
+            return {deleteModal};
+        })
+    }
+
+    deleteIndex(indexNode) {
+        let successHandler = () => {
+            toast("删除成功", {type: "success", toastId: "index-page-toast"});
+            let treeData = removeNodeAtPath({
+                treeData: this.state.treeData,
+                path: this.state.operateIndexPath,
+                getNodeKey: ({node}) => node.original.indexId
+            });
+            this.doSetHeight = true;
+            this.setState({
+                deleteModal: {
+                    open: false,
+                    index: null
+                },
+                treeData: treeData
+            })
+        };
+
+        if (indexNode.original.type === Index.TYPE_INDICES) {
+            let promises = [];
+            let queue = [indexNode];
+            while (queue.length > 0) {
+                let cur = queue.shift();
+                queue = queue.concat(cur.children);
+                promises.push(ApiClient.delete("index", cur.original.indexId));
+            }
+            Promise.all(promises)
+                .then(successHandler)
+                .catch(() => toast("删除失败", {type: "error", toastId: "index-page-toast"}));
+
+        } else {
+            ApiClient.delete("index", indexNode.original.indexId)
+                .then(successHandler)
+                .catch(() => toast("删除失败", {type: "error", toastId: "index-page-toast"})
+                )
+        }
+
+    }
+
     render() {
         return (
             <ContentWrapper>
@@ -302,6 +365,27 @@ class IndexManagementPage extends React.Component {
                 <IndexModal index={this.state.operateIndex} isOpen={this.state.indexModalOpen}
                             toggle={this.toggleIndexModal.bind(this)} onChange={this.saveIndex.bind(this)}
                             indices={this.state.indices} newIndex={this.state.createIndex}/>
+                <Modal isOpen={this.state.deleteModal.open}>
+                    <ModalHeader toggle={this.toggleDeleteModal.bind(this)}>
+                        <FontAwesomeIcon icon={faExclamationTriangle} color="red"/>
+                        确认删除
+                    </ModalHeader>
+                    <ModalBody>
+                        确实要删除指标
+                        {this.state.deleteModal.indexNode ?
+                            this.state.deleteModal.indexNode.original.displayName + "(ID:" + this.state.deleteModal.indexNode.original.indexId + ")"
+                            + (this.state.deleteModal.indexNode.original.type === Index.TYPE_INDICES ? "及其所有子指标" : "")
+                            : ""}
+                        吗？
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button color="danger"
+                                onClick={this.deleteIndex.bind(this, this.state.deleteModal.indexNode)}>确认</Button>
+                        <Button color="secondary" onClick={this.toggleDeleteModal.bind(this)}>
+                            取消
+                        </Button>
+                    </ModalFooter>
+                </Modal>
                 <ToastContainer id="index-page-toast"/>
             </ContentWrapper>
         )
