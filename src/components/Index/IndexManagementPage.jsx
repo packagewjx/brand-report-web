@@ -1,6 +1,11 @@
 import React from 'react';
 import {withRouter} from 'react-router-dom';
-import SortableTree, {getVisibleNodeCount, removeNodeAtPath, toggleExpandedForAll} from 'react-sortable-tree';
+import SortableTree, {
+    addNodeUnderParent,
+    getVisibleNodeCount,
+    removeNodeAtPath,
+    toggleExpandedForAll
+} from 'react-sortable-tree';
 import ContentWrapper from "../Layout/ContentWrapper";
 import {Button, Card, Modal, ModalBody, ModalFooter, ModalHeader} from 'reactstrap';
 import ApiClient from "../Utils/ApiClient";
@@ -273,6 +278,32 @@ class IndexManagementPage extends React.Component {
         })
     }
 
+    onMoveNode({node, nextParentNode, nextPath}) {
+        let index = node.original;
+        index.parentIndexId = nextParentNode === null ? null : nextParentNode.original.indexId;
+        ApiClient.update("index", index, index.indexId)
+            .then(() => {
+                this.doSetHeight = true;
+                toast("修改父节点成功", {type: "success"})
+            })
+            .catch(() => {
+                toast("修改父节点失败", {type: "error"});
+                // 若失败，则改回原来的位置
+                let treeData = removeNodeAtPath({
+                    treeData: this.state.treeData,
+                    path: nextPath,
+                    getNodeKey: ({node}) => node.original.indexId
+                });
+                let result = addNodeUnderParent({
+                    newNode: node,
+                    treeData: treeData,
+                    parentKey: node.original.parentIndexId,
+                    getNodeKey: ({node}) => node.original.indexId
+                });
+                this.setState({treeData: result.treeData});
+            })
+    }
+
     deleteIndex(indexNode) {
         let successHandler = () => {
             toast("删除成功", {type: "success", toastId: "index-page-toast"});
@@ -306,8 +337,7 @@ class IndexManagementPage extends React.Component {
         } else {
             ApiClient.delete("index", indexNode.original.indexId)
                 .then(successHandler)
-                .catch(() => toast("删除失败", {type: "error", toastId: "index-page-toast"})
-                )
+                .catch(() => toast("删除失败", {type: "error", toastId: "index-page-toast"}))
         }
 
     }
@@ -354,7 +384,9 @@ class IndexManagementPage extends React.Component {
                                 treeData={this.state.treeData}
                                 onChange={treeData => this.setState({treeData})}
                                 canDrag={this.state.canDrag}
+                                canNodeHaveChildren={(node) => node.original.type === Index.TYPE_INDICES}
                                 getNodeKey={({node}) => node.original.indexId}
+                                onMoveNode={this.onMoveNode.bind(this)}
                                 onVisibilityToggle={this.onVisibilityToggle.bind(this)}
                                 generateNodeProps={this.generateNodeProps.bind(this)}
                                 rowHeight={ROW_HEIGHT}
@@ -388,7 +420,7 @@ class IndexManagementPage extends React.Component {
                 </Modal>
                 <ToastContainer id="index-page-toast"/>
             </ContentWrapper>
-        )
+        );
     }
 }
 
