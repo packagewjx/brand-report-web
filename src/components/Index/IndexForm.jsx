@@ -215,13 +215,24 @@ export default class IndexForm extends React.Component {
             )
         } else if (scoreAnnotation instanceof StepScoreIndexAnnotations) {
             scoreForm.push(
-                <StepScoreDefinitionEditor key="step" editorShow={this.props.enableEdit}
-                                           definition={scoreAnnotation.definition}
-                                           lowerBoundExclusive={"true" === scoreAnnotation["score_step_lower-bound-exclusive"]}
-                                           onChange={(definition) => {
-                                               this.props.index.annotations["score_step_score-definition"] = JSON.stringify(definition);
-                                               this.props.onChange(this.props.index);
-                                           }}/>
+                <React.Fragment key="step">
+                    <div className="checkbox c-checkbox">
+                        <label>
+                            <Input type="checkbox"
+                                   checked={"true" === scoreAnnotation["score_step_lower-bound-exclusive"]}
+                                   onChange={this.changeAnnotation.bind(this, "score_step_lower-bound-exclusive", true)}
+                                   disabled={!this.props.enableEdit}/>
+                            <span className="fa fa-check"/>区间不包含下界
+                        </label>
+                    </div>
+                    <StepScoreDefinitionEditor  editorShow={this.props.enableEdit}
+                                               definition={scoreAnnotation.definition}
+                                               lowerBoundExclusive={"true" === scoreAnnotation["score_step_lower-bound-exclusive"]}
+                                               onChange={(definition) => {
+                                                   this.props.index.annotations["score_step_score-definition"] = JSON.stringify(definition);
+                                                   this.props.onChange(this.props.index);
+                                               }}/>
+                </React.Fragment>
             )
         } else if (scoreAnnotation instanceof EnumScoreIndexAnnotations) {
             scoreForm.push(
@@ -389,8 +400,6 @@ export default class IndexForm extends React.Component {
                                                onChange={this.changeAnnotation.bind(this, "chart_aspect-ratio", false)}/>
                         </>
                 }
-
-
             </form>
         );
     }
