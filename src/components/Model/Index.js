@@ -13,19 +13,19 @@ export default class Index {
         return Object.assign(new Index(), json);
     }
 
-    indexId;
+    indexId = "";
 
-    displayName;
+    displayName = "";
 
-    parentIndexId;
+    parentIndexId = null;
 
     type;
 
     period;
 
-    description;
+    description = "";
 
-    unit;
+    unit = "";
 
-    annotations;
+    annotations = {};
 }

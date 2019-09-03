@@ -60,7 +60,8 @@ export default class IndexForm extends React.Component {
         index: PropTypes.instanceOf(Index).isRequired,
         onChange: PropTypes.func.isRequired,
         indices: PropTypes.arrayOf(PropTypes.instanceOf(Index)).isRequired,
-        enableEdit: PropTypes.bool
+        enableEdit: PropTypes.bool,
+        newIndex: PropTypes.bool
     };
 
     constructor(props) {
@@ -225,7 +226,7 @@ export default class IndexForm extends React.Component {
                             <span className="fa fa-check"/>区间不包含下界
                         </label>
                     </div>
-                    <StepScoreDefinitionEditor  editorShow={this.props.enableEdit}
+                    <StepScoreDefinitionEditor editorShow={this.props.enableEdit}
                                                definition={scoreAnnotation.definition}
                                                lowerBoundExclusive={"true" === scoreAnnotation["score_step_lower-bound-exclusive"]}
                                                onChange={(definition) => {
@@ -296,7 +297,10 @@ export default class IndexForm extends React.Component {
             <form className="index-form">
                 <h4>基本设置</h4>
                 <ExtendedFormGroup label="指标ID" editorShow={this.props.enableEdit} value={index.indexId}
-                                   inputDisabled={true}/>
+                                   inputDisabled={!this.props.newIndex} onChange={e => {
+                    index.indexId = e.target.value;
+                    this.props.onChange(index);
+                }}/>
                 <ExtendedFormGroup label="显示名" value={index.displayName} onChange={(e) => {
                     index.displayName = e.target.value;
                     this.props.onChange(index);

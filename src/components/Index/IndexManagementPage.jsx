@@ -6,9 +6,18 @@ import {Button, Card} from 'reactstrap';
 import ApiClient from "../Utils/ApiClient";
 import Index from "../Model/Index";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faAngleDoubleDown, faAngleDoubleUp, faInfo, faPlus, faStream, faSync} from '@fortawesome/free-solid-svg-icons';
+import {
+    faAngleDoubleDown,
+    faAngleDoubleUp,
+    faInfo,
+    faPlus,
+    faStream,
+    faSync,
+    faTrash
+} from '@fortawesome/free-solid-svg-icons';
 import 'react-sortable-tree/style.css';
 import {IndexModal} from "./IndexModal";
+import {toast, ToastContainer} from 'react-toastify';
 
 const ROW_HEIGHT = 62;
 
@@ -25,7 +34,9 @@ class IndexManagementPage extends React.Component {
             allExpanded: false,
             treeHeight: 0,
             operateIndex: null,
-            indexModalOpen: false
+            indexModalOpen: false,
+            operateIndexPath: [],
+            createIndex: false
         }
     }
 
@@ -121,7 +132,7 @@ class IndexManagementPage extends React.Component {
         return {
             buttons: [
                 <Button size="xs" title="查看与编辑" onClick={() => {
-                    this.setState({indexModalOpen: true, operateIndex: node.original})
+                    this.setState({indexModalOpen: true, operateIndex: node.original, operateIndexPath: path})
                 }}>
                     <FontAwesomeIcon fixedWidth={true} icon={faInfo}/>
                 </Button>,
@@ -137,8 +148,12 @@ class IndexManagementPage extends React.Component {
                         }}>
                             <FontAwesomeIcon fixedWidth={true} icon={faAngleDoubleDown}/>
                         </Button>,
-                <Button size="xs" title="新建子指标">
-                    <FontAwesomeIcon icon={faPlus} fixedWidth={true}/>
+                node.original.type === Index.TYPE_INDICES ?
+                    <Button size="xs" title="新建子指标" onClick={this.createIndex.bind(this, node.original.indexId, path)}>
+                        <FontAwesomeIcon icon={faPlus} fixedWidth={true}/>
+                    </Button> : null,
+                <Button size="xs" title="删除">
+                    <FontAwesomeIcon icon={faTrash} fixedWidth={true}/>
                 </Button>
             ]
         }
@@ -146,6 +161,92 @@ class IndexManagementPage extends React.Component {
 
     toggleIndexModal() {
         this.setState({indexModalOpen: !this.state.indexModalOpen});
+    }
+
+    /**
+     *
+     * @param {Index} index
+     */
+    saveIndex(index) {
+        if (this.state.createIndex) {
+            ApiClient.insert("index", index)
+                .then((response) => {
+                    toast("修改成功", {type: "success", toastId: "index-page-toast"});
+                    let newIndex = Index.fromJson(response);
+                    let level = this.state.treeData;
+                    for (let i = 0; i < this.state.operateIndexPath.length; i++) {
+                        for (let j = 0; j < level.length; j++) {
+                            if (level[j].original.indexId === this.state.operateIndexPath[i]) {
+                                level = level[j].children;
+                            }
+                        }
+                    }
+                    let node = new Node();
+                    node.original = newIndex;
+                    node.title = newIndex.displayName;
+                    node.subtitle = newIndex.indexId;
+                    node.children = [];
+                    level.push(node);
+                    // 更新一下高度
+                    this.doSetHeight = true;
+                    this.setState({
+                        operateIndex: null,
+                        operateIndexPath: [],
+                        createIndex: false,
+                        indexModalOpen: false,
+                        treeData: this.state.treeData
+                    });
+                })
+                .catch(() => {
+                    toast("修改失败", {type: "error", toastId: "index-page-toast"})
+                })
+        } else {
+            ApiClient.update("index", index, index.indexId)
+                .then((response) => {
+                    let newIndex = Index.fromJson(response);
+                    toast("修改成功", {type: "success", toastId: "index-modal-toast"});
+                    let level = this.state.treeData;
+                    let node = undefined;
+                    for (let i = 0; i < this.state.operateIndexPath.length - 1; i++) {
+                        for (let j = 0; j < level.length; j++) {
+                            if (level[j].original.indexId === this.state.operateIndexPath[i]) {
+                                level = level[j].children;
+                            }
+                        }
+                    }
+                    for (let i = 0; i < level.length; i++) {
+                        if (level[i].original.indexId === this.state.operateIndexPath[this.state.operateIndexPath.length - 1]) {
+                            node = level[i];
+                        }
+                    }
+                    if (node === undefined) {
+                        console.warn("找不到节点，错误");
+                        this._fetchData();
+                        return
+                    }
+                    node.original = newIndex;
+                    node.title = newIndex.displayName;
+                    this.doSetHeight = true;
+                    this.setState({
+                        operateIndex: newIndex,
+                        treeData: this.state.treeData
+                    })
+                })
+                .catch(() => {
+                    toast("修改失败", {type: "error", toastId: "index-modal-toast"})
+                })
+        }
+    }
+
+    createIndex(parentIndexId, operateIndexPath) {
+        let newIndex = new Index();
+        newIndex.parentIndexId = parentIndexId;
+        this.setState({
+            createIndex: true,
+            operateIndex: newIndex,
+            operateIndexPath: operateIndexPath,
+            indexModalOpen: true
+        })
     }
 
     render() {
@@ -167,7 +268,7 @@ class IndexManagementPage extends React.Component {
                                 "修改结构"
                             }
                         </Button>
-                        <Button color="success">
+                        <Button color="success" onClick={this.createIndex.bind(this, null)}>
                             <FontAwesomeIcon icon={faPlus}/>
                             新建根指标
                         </Button>
@@ -199,8 +300,9 @@ class IndexManagementPage extends React.Component {
                     }
                 </Card>
                 <IndexModal index={this.state.operateIndex} isOpen={this.state.indexModalOpen}
-                            toggle={this.toggleIndexModal.bind(this)} onChange={(v) => console.log(v)}
-                            indices={this.state.indices}/>
+                            toggle={this.toggleIndexModal.bind(this)} onChange={this.saveIndex.bind(this)}
+                            indices={this.state.indices} newIndex={this.state.createIndex}/>
+                <ToastContainer id="index-page-toast"/>
             </ContentWrapper>
         )
     }
