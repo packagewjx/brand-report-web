@@ -3,10 +3,84 @@ import PropTypes from 'prop-types';
 import IndustryReport from "../../Model/IndustryReport";
 import Index from "../../Model/Index";
 import Brand from "../../Model/Brand";
-import ChildIndexDataViewer from "./ChildIndexDataViewer";
 import ContentWrapper from "../../Layout/ContentWrapper";
-import {Card, Nav, NavItem, NavLink, TabContent, TabPane} from 'reactstrap';
+import {Card, Nav, NavItem, NavLink, TabContent} from 'reactstrap';
 import classnames from 'classnames';
+import {constructIndexTree} from "../../Utils/IndexUtils";
+import ChartAnnotations from "../../Model/IndexAnnotations/ChartAnnotations";
+import {ChartSetting} from "./ChartSetting";
+import RootIndexTabPane from "./RootIndexTabPane";
+
+function setFromAnnotation(chartSetting, chartAnnotation) {
+    chartSetting.aspectRatio = parseFloat(chartAnnotation["chart_aspect-ratio"]);
+    chartSetting.maintainAspectRatio = !isNaN(chartSetting.aspectRatio);
+    if (typeof chartAnnotation.chart_colors === "string") {
+        let s = chartAnnotation.chart_colors.trim();
+        s = s.replace(" ", "");
+        chartSetting.colors = s.split(",");
+    }
+    chartSetting.type = typeof chartAnnotation.chart_type === "string" ? chartAnnotation.chart_type : ChartSetting.TYPE_DEFAULT;
+}
+
+/**
+ *
+ * @param {IndexNode} indexNode
+ * @return {ChartSetting[]}
+ */
+function indexNodeTraversal(indexNode) {
+    if (indexNode === undefined || indexNode === null) {
+        return [];
+    }
+
+    let result = [];
+    let chartAnnotation = ChartAnnotations.fromIndex(indexNode.index);
+    if (chartAnnotation.chart_disable !== "true") {
+        if (chartAnnotation["chart_draw-all-sub-index"] === "true") {
+            let queue = [indexNode];
+            let indices = [];
+            while (queue.length > 0) {
+                let node = queue.shift();
+                queue = queue.concat(node.children);
+                if (node.index.type !== Index.TYPE_INDICES) {
+                    indices.push(node.index);
+                }
+            }
+            let chartSetting = new ChartSetting(indices);
+            setFromAnnotation(chartSetting, chartAnnotation);
+            chartSetting.title = indexNode.index.displayName;
+            result.push(chartSetting);
+        } else if (indexNode.index.type !== Index.TYPE_INDICES) {
+            let chartSetting = new ChartSetting([indexNode.index]);
+            setFromAnnotation(chartSetting, chartAnnotation);
+            chartSetting.title = indexNode.index.displayName;
+            result.push(chartSetting);
+        }
+    }
+
+    // 加入子节点的
+    for (let i = 0; i < indexNode.children.length; i++) {
+        result = result.concat(indexNodeTraversal(indexNode.children[i]));
+    }
+
+    return result;
+
+}
+
+/**
+ *
+ * @param {Index[]}indices
+ * @return {Map.<Index, ChartSetting[]>}
+ */
+function getChartSettings(indices) {
+    let indexTree = constructIndexTree(indices);
+    let result = new Map();
+    for (let i = 0; i < indexTree.length; i++) {
+        let settings = indexNodeTraversal(indexTree[i]);
+        result.set(indexTree[i].index, settings);
+    }
+    return result;
+}
+
 
 export default class IndustryReportViewer extends React.Component {
     static propTypes = {
@@ -19,30 +93,29 @@ export default class IndustryReportViewer extends React.Component {
         super(props);
 
         this.toggleTab = this.toggleTab.bind(this);
-        this.setHeight = this.setHeight.bind(this);
+        this.setSize = this.setSize.bind(this);
 
         this.state = {
             activeTab: undefined,
-            height: 0
+            height: 0,
+            width: 0,
         }
     }
 
     componentDidMount() {
-        this.setHeight();
+        this.setSize();
         window.addEventListener("resize", ev => {
             // 窗口重调整时进行调整
-            this.setHeight();
+            this.setSize();
         })
     }
 
-    setHeight() {
+    setSize() {
         let rect = this.divElement.getClientRects()[0];
         let footerHeight = document.getElementsByClassName("footer-container")[0].clientHeight;
-        let newHeight = window.innerHeight - rect.top - footerHeight - 45;
-        if (this.state.height === rect.top) {
-            return
-        }
-        this.setState({height: newHeight});
+        let newHeight = window.innerHeight - rect.top - footerHeight - 65;
+        let newWidth = rect.width - 40;
+        this.setState({height: newHeight, width: newWidth});
     }
 
     toggleTab(tab) {
@@ -54,35 +127,27 @@ export default class IndustryReportViewer extends React.Component {
     };
 
     render() {
-        let rootIndices = [];
-        for (let i = 0; i < this.props.indices.length; i++) {
-            if (this.props.indices[i].parentIndexId === null) {
-                rootIndices.push(this.props.indices[i]);
-            }
-        }
-
         let navItems = [];
         let tabPanes = [];
-        for (let i = 0; i < rootIndices.length; i++) {
+
+        let chartSettings = getChartSettings(this.props.indices);
+        chartSettings.forEach((chartSettings, rootIndex) => {
             navItems.push(
-                <NavItem key={i}>
+                <NavItem key={rootIndex.indexId}>
                     <NavLink style={{cursor: "pointer"}}
-                             className={classnames({active: this.state.activeTab === rootIndices[i].indexId})}
-                             onClick={() => {
-                                 this.toggleTab(rootIndices[i].indexId);
-                             }}>
-                        {rootIndices[i].displayName}
+                             className={classnames({active: this.state.activeTab === rootIndex.indexId})}
+                             onClick={() => this.toggleTab(rootIndex.indexId)}>
+                        {rootIndex.displayName}
                     </NavLink>
                 </NavItem>
             );
             tabPanes.push(
-                <TabPane key={i} tabId={rootIndices[i].indexId}>
-                    <ChildIndexDataViewer indices={this.props.indices} rootIndex={rootIndices[i]}
-                                          industryReport={this.props.industryReport} height={this.state.height}/>
-                </TabPane>
+                <RootIndexTabPane key={rootIndex.indexId} indices={this.props.indices} height={this.state.height}
+                                  tabId={rootIndex.indexId} width={this.state.width} chartHeight={this.state.height}
+                                  industryReport={this.props.industryReport} rootIndex={rootIndex}
+                                  chartSettings={chartSettings} brands={this.props.brands}/>
             )
-
-        }
+        });
 
         return (
             <ContentWrapper>
@@ -91,18 +156,16 @@ export default class IndustryReportViewer extends React.Component {
                     <Nav tabs>
                         {navItems}
                     </Nav>
-                    <TabContent activeTab={this.state.activeTab}>
-                        <div id="tabs" style={{height: this.state.height}} ref={instance => {
-                            this.divElement = instance
-                        }}>
+                    <div id="tabs" style={{height: this.state.height + 20}} ref={instance => {
+                        this.divElement = instance
+                    }}>
+                        <TabContent activeTab={this.state.activeTab}>
                             {tabPanes}
-                        </div>
-                    </TabContent>
+                        </TabContent>
+                    </div>
                 </Card>
             </ContentWrapper>
         );
     }
 }
-
-
 

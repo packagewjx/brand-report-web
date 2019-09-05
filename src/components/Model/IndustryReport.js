@@ -15,7 +15,9 @@ export default class IndustryReport {
     stat;
 
     /**
-     * @type {Map<string, BrandReport>}
+     * 键为品牌ID，值为品牌报告的映射表
+     *
+     * @type {Object.<string, BrandReport>}
      */
     brandReports;
 

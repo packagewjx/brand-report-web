@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import Index from "../Model/Index";
-import {ChartSetting} from "../Report/IndustryReport/ChildIndexDataViewer";
+import {ChartSetting} from "../Report/IndustryReport/ChartSetting";
 import {
     BooleanScoreIndexAnnotations,
     EnumScoreIndexAnnotations,
