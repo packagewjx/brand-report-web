@@ -11,6 +11,28 @@ import Chart from 'chart.js';
 
 const SORT_ASC = "asc";
 const SORT_DESC = "desc";
+const COLOR = [
+    '#23b7e5',
+    '#7266ba',
+    '#fad732',
+    '#f532e5',
+    'rgba(114,102,186,0.2)',
+    'rgba(151,187,205,1)',
+    "rgba(255, 99, 132, 0.2)",
+    "rgba(255, 159, 64, 0.2)",
+    "rgba(255, 205, 86, 0.2)",
+    "rgba(75, 192, 192, 0.2)",
+    "rgba(54, 162, 235, 0.2)",
+    "rgba(153, 102, 255, 0.2)",
+    "rgba(201, 203, 207, 0.2)",
+    "rgb(255, 99, 132)",
+    "rgb(255, 159, 64)",
+    "rgb(255, 205, 86)",
+    "rgb(75, 192, 192)",
+    "rgb(54, 162, 235)",
+    "rgb(153, 102, 255)",
+    "rgb(201, 203, 207)"
+];
 
 export class ChartDrawer extends React.Component {
     static propTypes = {
@@ -143,11 +165,6 @@ export class ChartDrawer extends React.Component {
                     case ChartSetting.TYPE_TABLE:
                         return chartSetting.type;
                     case ChartSetting.TYPE_PIE:
-                        if (indexType === Index.TYPE_ENUM) {
-                            return chartSetting.type;
-                        } else {
-                            throw new Error("饼图仅支持枚举型指标");
-                        }
                     case ChartSetting.TYPE_SINGLE_BAR:
                         throw new Error("多指标时不支持" + chartSetting.type + "类型");
                     default:
@@ -186,19 +203,49 @@ export class ChartDrawer extends React.Component {
         if (data.length !== indices.length) {
             throw new Error("数据的长度与指标数组长度不一致");
         }
+        if (data.length === 0) {
+            throw new Error("没有数据！");
+        }
         if (colors === undefined) {
             colors = [];
         }
 
         let dataConfig = new ChartJSDataConfigObject();
-        dataConfig.labels = labels;
-        dataConfig.datasets = [];
-        for (let i = 0; i < indices.length; i++) {
+        if (type === ChartSetting.TYPE_PIE) {
+            // 重建标签
+            let map = new Map();
+            for (let i = 0; i < data[0].length; i++) {
+                if (map.has(data[0][i])) {
+                    map.set(data[0][i], map.get(data[0][i]) + 1);
+                } else {
+                    map.set(data[0][i], 1);
+                }
+            }
+            let dataLabels = [];
+            let pieData = [];
+            map.forEach((value, key) => {
+                dataLabels.push(key === undefined ? "无数据" : key);
+                pieData.push(value);
+            });
+            dataConfig.labels = dataLabels;
             let dataset = new ChartJSDataSet();
-            dataset.data = data[i];
-            dataset.label = indices[i].displayName;
-            dataset.backgroundColor = colors[i];
-            dataConfig.datasets.push(dataset);
+            dataset.label = indices[0].displayName;
+            dataset.data = pieData;
+            dataset.backgroundColor = [];
+            for (let i = 0; i < pieData.length; i++) {
+                dataset.backgroundColor.push(colors[i] ? colors[i] : COLOR[i]);
+            }
+            dataConfig.datasets = [dataset];
+        } else {
+            dataConfig.labels = labels;
+            dataConfig.datasets = [];
+            for (let i = 0; i < indices.length; i++) {
+                let dataset = new ChartJSDataSet();
+                dataset.label = indices[i].displayName;
+                dataset.backgroundColor = colors[i] ? colors[i] : COLOR[i];
+                dataset.data = data[i];
+                dataConfig.datasets.push(dataset);
+            }
         }
         return dataConfig;
     }
@@ -267,7 +314,9 @@ export class ChartDrawer extends React.Component {
                     <h3>
                         {this.props.chartSetting.title}
                     </h3>
-                    <canvas ref={instance => this.canvas = instance} id={this.canvasId}/>
+                    <div style={{height: this.props.height - 40}}>
+                        <canvas ref={instance => this.canvas = instance} id={this.canvasId}/>
+                    </div>
                 </div>
             );
         }

@@ -57,6 +57,7 @@ class IndustryReportManagementPage extends React.Component {
             state.data = null;
             return state;
         }
+        return null;
     }
 
     componentDidUpdate(prevProps, prevState, prevContext) {
