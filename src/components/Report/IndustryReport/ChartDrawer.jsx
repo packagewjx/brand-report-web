@@ -347,7 +347,6 @@ export class ChartDrawer extends React.Component {
 
     componentWillUnmount() {
         if (this.props.chartSetting.type !== ChartSetting.TYPE_TABLE) {
-            console.log("准备销毁" + this.props.chartSetting.title);
             this.chart.destroy();
         }
     }

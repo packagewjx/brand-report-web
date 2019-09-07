@@ -16,7 +16,8 @@ export default class RootIndexTabPane extends React.Component {
         indices: PropTypes.arrayOf(PropTypes.instanceOf(Index)),
         industryReport: PropTypes.instanceOf(IndustryReport),
         brands: PropTypes.arrayOf(PropTypes.instanceOf(Brand)),
-        tabId: PropTypes.any.isRequired
+        tabId: PropTypes.any.isRequired,
+        activeTab: PropTypes.any
     };
 
     constructor(props) {
@@ -24,7 +25,7 @@ export default class RootIndexTabPane extends React.Component {
 
 
         this.cellMeasureCache = new CellMeasurerCache({
-            minHeight: props.width / 1.617,
+            minHeight: window.innerWidth / 2,
             fixedWidth: true
         })
     }
@@ -44,13 +45,11 @@ export default class RootIndexTabPane extends React.Component {
         )
     }
 
-    // recomputeRowHeights() {
-    //     this.cellMeasureCache.clearAll();
-    //     this.list.measureAllRows();
-    // }
-
     render() {
         let self = this;
+        if (this.props.activeTab !== this.props.tabId) {
+            return null;
+        }
         // noinspection RequiredAttributes
         return (
             <TabPane tabId={this.props.tabId}>

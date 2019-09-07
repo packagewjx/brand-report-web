@@ -122,13 +122,12 @@ export default class IndustryReportViewer extends React.Component {
                     </NavLink>
                 </NavItem>
             );
-            let tabPane = (
-                <RootIndexTabPane key={rootIndex.indexId} indices={this.props.indices}
+            tabPanes.push(
+                <RootIndexTabPane key={rootIndex.indexId} indices={this.props.indices} activeTab={this.state.activeTab}
                                   tabId={rootIndex.indexId} chartHeight={this.state.height}
                                   industryReport={this.props.industryReport} rootIndex={rootIndex}
                                   chartSettings={chartSettings} brands={this.props.brands}/>
             );
-            tabPanes.push(tabPane);
         });
 
         return (
