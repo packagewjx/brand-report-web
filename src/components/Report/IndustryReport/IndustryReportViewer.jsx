@@ -4,7 +4,7 @@ import IndustryReport from "../../Model/IndustryReport";
 import Index from "../../Model/Index";
 import Brand from "../../Model/Brand";
 import ContentWrapper from "../../Layout/ContentWrapper";
-import {Card, Nav, NavItem, NavLink, TabContent} from 'reactstrap';
+import {Card, Nav, NavItem, NavLink, TabContent, TabPane} from 'reactstrap';
 import classnames from 'classnames';
 import {constructIndexTree} from "../../Utils/IndexUtils";
 import ChartAnnotations from "../../Model/IndexAnnotations/ChartAnnotations";
@@ -93,30 +93,11 @@ export default class IndustryReportViewer extends React.Component {
         super(props);
 
         this.toggleTab = this.toggleTab.bind(this);
-        this.setSize = this.setSize.bind(this);
-
         this.state = {
             activeTab: undefined,
-            height: 0,
-            width: 0,
         }
     }
 
-    componentDidMount() {
-        this.setSize();
-        window.addEventListener("resize", ev => {
-            // 窗口重调整时进行调整
-            this.setSize();
-        })
-    }
-
-    setSize() {
-        let rect = this.divElement.getClientRects()[0];
-        let footerHeight = document.getElementsByClassName("footer-container")[0].clientHeight;
-        let newHeight = window.innerHeight - rect.top - footerHeight - 65;
-        let newWidth = rect.width - 40;
-        this.setState({height: newHeight, width: newWidth});
-    }
 
     toggleTab(tab) {
         if (this.state.activeTab !== tab) {
@@ -141,12 +122,13 @@ export default class IndustryReportViewer extends React.Component {
                     </NavLink>
                 </NavItem>
             );
-            tabPanes.push(
-                <RootIndexTabPane key={rootIndex.indexId} indices={this.props.indices} height={this.state.height}
-                                  tabId={rootIndex.indexId} width={this.state.width} chartHeight={this.state.height}
+            let tabPane = (
+                <RootIndexTabPane key={rootIndex.indexId} indices={this.props.indices}
+                                  tabId={rootIndex.indexId} chartHeight={this.state.height}
                                   industryReport={this.props.industryReport} rootIndex={rootIndex}
                                   chartSettings={chartSettings} brands={this.props.brands}/>
-            )
+            );
+            tabPanes.push(tabPane);
         });
 
         return (
@@ -156,11 +138,12 @@ export default class IndustryReportViewer extends React.Component {
                     <Nav tabs>
                         {navItems}
                     </Nav>
-                    <div id="tabs" style={{height: this.state.height + 20}} ref={instance => {
-                        this.divElement = instance
-                    }}>
+                    <div id="tabs">
                         <TabContent activeTab={this.state.activeTab}>
                             {tabPanes}
+                            <TabPane tabId={undefined}>
+                                请选择需要查看的标签页
+                            </TabPane>
                         </TabContent>
                     </div>
                 </Card>
