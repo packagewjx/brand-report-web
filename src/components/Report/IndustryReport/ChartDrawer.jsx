@@ -9,6 +9,7 @@ import ChartJSDataConfigObject from "./ChartJSDataConfigObject";
 import ChartJSDataSet from "./ChartJSDataSet";
 import Chart from 'chart.js';
 import {Table} from "reactstrap";
+import ChartJSConfigObject from "./ChartJSConfigObject";
 
 const SORT_ASC = "asc";
 const SORT_DESC = "desc";
@@ -56,7 +57,7 @@ export class ChartDrawer extends React.Component {
         this.canvasId = generateRandomId();
         this.doDraw = this.doDraw.bind(this);
         this.state = {
-            dataConfig: null,
+            chartConfig: null,
             type: null,
             brandMap: null,
             chartHeight: 0,
@@ -69,13 +70,15 @@ export class ChartDrawer extends React.Component {
     }
 
     static getDerivedStateFromProps(props, prevState) {
-        if (prevState.dataConfig === null) {
+        if (prevState.chartConfig === null) {
             let type = ChartDrawer._getType(props.chartSetting);
             let {chartHeight, addHeight} = ChartDrawer.determineChartDrawerHeight(props.chartSetting, props.industryReport, props.width);
             let {labels, data, brandMap} = ChartDrawer._getLabelAndData(props.chartSetting, props.industryReport, props.brands);
+            let dataConfig = ChartDrawer._getChartDataConfig(type, labels, data, props.chartSetting.indices, props.chartSetting.colors);
+            let chartConfig = ChartDrawer._getChartConfig(type, dataConfig, props.chartSetting);
             return {
                 type: type,
-                dataConfig: ChartDrawer._getChartDataConfig(type, labels, data, props.chartSetting.indices, props.chartSetting.colors),
+                chartConfig: chartConfig,
                 brandMap: brandMap,
                 chartHeight,
                 addHeight,
@@ -249,19 +252,22 @@ export class ChartDrawer extends React.Component {
     /**
      *
      * @param {string} type 绘图类型
-     * @param {string[]} labels 标签
+     * @param {string[]} brandNames 品牌名，与data[*]的数组的数据顺序对应
      * @param {*[][]} data 数据，第一维度是指标，第二维度则是品牌对应的数据值
      * @param {Index[]} indices 指标数据
      * @param {string[]} colors 颜色值
      * @private
      * @return {ChartJSDataConfigObject} 能用于Chartjs绘图的数据集对象
      */
-    static _getChartDataConfig(type, labels, data, indices, colors) {
+    static _getChartDataConfig(type, brandNames, data, indices, colors) {
         if (data.length !== indices.length) {
             throw new Error("数据的长度与指标数组长度不一致");
         }
         if (data.length === 0) {
             throw new Error("没有数据！");
+        }
+        if (brandNames.length !== data[0].length) {
+            throw new Error("品牌名长度与数据长度不一致");
         }
         if (colors === undefined) {
             colors = [];
@@ -293,8 +299,50 @@ export class ChartDrawer extends React.Component {
                 dataset.backgroundColor.push(colors[i] ? colors[i] : COLOR[i]);
             }
             dataConfig.datasets = [dataset];
-        } else {
+        }
+        if (type === ChartSetting.TYPE_RADAR) {
+            // 雷达图需要进行标准化工作
+            let labels = [];
+            let eachMax = [];
+            for (let i = 0; i < indices.length; i++) {
+                labels.push(indices[i].displayName);
+                eachMax.push(0);
+            }
+            // 找出所有的最大值
+            for (let i = 0; i < indices.length; i++) {
+                let max = 0;
+                for (let j = 0; j < data[i].length; j++) {
+                    if (data[i][j] > max) {
+                        max = data[i][j]
+                    }
+                }
+                eachMax[i] = max;
+            }
+            let dataSets = [];
+            for (let i = 0; i < brandNames.length; i++) {
+                // 随机选颜色
+                let red = 256 * Math.random();
+                let blue = 256 * Math.random();
+                let green = 256 * Math.random();
+                let brandNormalizedData = [];
+                let brandData = [];
+                for (let j = 0; j < indices.length; j++) {
+                    brandNormalizedData.push(data[j][i] / eachMax[j]);
+                    brandData.push(data[j][i]);
+                }
+                let dataSet = new ChartJSDataSet();
+                dataSet.label = brandNames[i];
+                dataSet.data = brandNormalizedData;
+                dataSet.backgroundColor = `rgb(${red}, ${blue}, ${green}, 0.2)`;
+                // 默认不显示，防止图过于难看
+                dataSet.hidden = true;
+                dataSet.originalData = brandData;
+                dataSets.push(dataSet);
+            }
+            dataConfig.datasets = dataSets;
             dataConfig.labels = labels;
+        } else {
+            dataConfig.labels = brandNames;
             dataConfig.datasets = [];
             for (let i = 0; i < indices.length; i++) {
                 let dataset = new ChartJSDataSet();
@@ -307,6 +355,78 @@ export class ChartDrawer extends React.Component {
         return dataConfig;
     }
 
+    /**
+     * 获取chartOption
+     * @param {string} type
+     * @param {ChartJSDataConfigObject} dataConfig
+     * @param {ChartSetting} chartSetting
+     * @return {ChartJSConfigObject}
+     * @private
+     */
+    static _getChartConfig(type, dataConfig, chartSetting) {
+        let chartConfig = new ChartJSConfigObject();
+        chartConfig.data = dataConfig;
+        chartConfig.options = {
+            maintainAspectRatio: chartSetting.maintainAspectRatio,
+            aspectRatio: chartSetting.aspectRatio,
+            animation: {
+                duration: 0,
+            },
+        };
+
+        switch (type) {
+            case ChartSetting.TYPE_TABLE:
+            default:
+                throw new Error(`不支持${type}`);
+            case ChartSetting.TYPE_SINGLE_BAR:
+            case ChartSetting.TYPE_STACK_BAR:
+                chartConfig.type = "horizontalBar";
+                chartConfig.options.scales = {
+                    xAxes: [{
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value + chartSetting.indices[0].unit;
+                            }
+                        }
+                    }],
+                };
+                chartConfig.options.tooltips = {
+                    callbacks: {
+                        label: function (tooltipItem, data) {
+                            return data.datasets[tooltipItem.datasetIndex].label + ": "
+                                + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]
+                                + chartSetting.indices[0].unit;
+                        }
+                    }
+                };
+                break;
+            case ChartSetting.TYPE_PIE:
+                chartConfig.type = "pie";
+                break;
+            case ChartSetting.TYPE_RADAR:
+                chartConfig.type = "radar";
+                // 雷达图是标准化过的，值的范围是0~1，因此需要显示原数据，而不是标准化后的
+                chartConfig.options.tooltips = {
+                    callbacks: {
+                        label: function (tooltipItem, data) {
+                            return data.datasets[tooltipItem.datasetIndex].label + ": "
+                                + data.datasets[tooltipItem.datasetIndex].originalData[tooltipItem.index]
+                                + chartSetting.indices[tooltipItem.index].unit;
+                        }
+                    }
+                };
+                // 关闭坐标轴，不显示标准化数据
+                chartConfig.options.scale = {
+                    ticks: {
+                        beginAtZero: true,
+                        display: false
+                    }
+                };
+                break;
+        }
+        return chartConfig;
+    }
+
     componentDidMount() {
         this.doDraw();
     }
@@ -316,33 +436,7 @@ export class ChartDrawer extends React.Component {
             return;
         }
 
-        let chartOption = {
-            data: this.state.dataConfig,
-            options: {
-                maintainAspectRatio: this.props.chartSetting.maintainAspectRatio,
-                aspectRatio: this.props.chartSetting.aspectRatio,
-                animation: {
-                    duration: 0,
-                }
-            }
-        };
-        switch (this.state.type) {
-            case ChartSetting.TYPE_TABLE:
-            default:
-                throw new Error("类型未知");
-            case ChartSetting.TYPE_SINGLE_BAR:
-            case ChartSetting.TYPE_STACK_BAR:
-                chartOption.type = "horizontalBar";
-                break;
-            case ChartSetting.TYPE_PIE:
-                chartOption.type = "pie";
-                break;
-            case ChartSetting.TYPE_RADAR:
-                chartOption.type = "radar";
-                break;
-        }
-
-        this.chart = new Chart(this.canvas, chartOption);
+        this.chart = new Chart(this.canvas, this.state.chartConfig);
     }
 
     componentWillUnmount() {
@@ -355,6 +449,7 @@ export class ChartDrawer extends React.Component {
         let chartSetting = this.props.chartSetting;
         let type = ChartDrawer._getType(chartSetting);
         let brandMap = this.state.brandMap;
+
 
         if (type === ChartSetting.TYPE_TABLE) {
             return (

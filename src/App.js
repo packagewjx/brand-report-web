@@ -57,7 +57,7 @@ class App extends Component {
                     'display': 'flex',
                     'flexDirection': 'column',
                     'justifyContent': 'center',
-                    'white-space': 'unset'
+                    'whiteSpace': 'unset'
                 }
             };
         }
