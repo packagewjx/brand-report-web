@@ -40,7 +40,11 @@ export class ChartDrawer extends React.Component {
     static propTypes = {
         chartSetting: PropTypes.instanceOf(ChartSetting).isRequired,
         industryReport: PropTypes.instanceOf(IndustryReport).isRequired,
-        brands: PropTypes.arrayOf(PropTypes.instanceOf(Brand)).isRequired,
+        /**
+         * 品牌ID与品牌的对应表
+         * @type {Map.<string, Brand>}
+         */
+        brandMap: PropTypes.instanceOf(Map),
         style: PropTypes.any,
         width: PropTypes.number.isRequired,
         measure: PropTypes.func
@@ -59,7 +63,6 @@ export class ChartDrawer extends React.Component {
         this.state = {
             chartConfig: null,
             type: null,
-            brandMap: null,
             chartHeight: 0,
             addHeight: 0,
             sort: {
@@ -70,18 +73,16 @@ export class ChartDrawer extends React.Component {
     }
 
     static getDerivedStateFromProps(props, prevState) {
-        if (prevState.chartConfig === null) {
+        if (props.chartSetting.type !== ChartSetting.TYPE_TABLE && prevState.chartConfig === null) {
             let type = ChartDrawer._getType(props.chartSetting);
-            let {chartHeight, addHeight} = ChartDrawer.determineChartDrawerHeight(props.chartSetting, props.industryReport, props.width);
-            let {labels, data, brandMap} = ChartDrawer._getLabelAndData(props.chartSetting, props.industryReport, props.brands);
+            let {chartHeight} = ChartDrawer.determineChartDrawerHeight(props.chartSetting, props.industryReport, props.width);
+            let {labels, data} = ChartDrawer._getLabelAndData(props.chartSetting, props.industryReport, props.brandMap);
             let dataConfig = ChartDrawer._getChartDataConfig(type, labels, data, props.chartSetting.indices, props.chartSetting.colors);
             let chartConfig = ChartDrawer._getChartConfig(type, dataConfig, props.chartSetting);
             return {
                 type: type,
                 chartConfig: chartConfig,
-                brandMap: brandMap,
                 chartHeight,
-                addHeight,
             };
         }
         return null;
@@ -92,57 +93,21 @@ export class ChartDrawer extends React.Component {
      * @param {ChartSetting} chartSetting
      * @param {IndustryReport} industryReport
      * @param {number} width 组件的宽度
-     * @return {{chartHeight: number, totalHeight: number, addHeight: number}} chartHeight是图的高度，totalHeight是组件总高度，addHeight是额外组件的高度
+     * @return {{chartHeight: number}} chartHeight是图的高度，totalHeight是组件总高度，addHeight是额外组件的高度
      */
     static determineChartDrawerHeight(chartSetting, industryReport, width) {
-        let type = ChartDrawer._getType(chartSetting);
-        let brandCount = Object.keys(industryReport.brandReports).length;
-        let indicesCount = chartSetting.indices.length;
-        let chartHeight = 0;
-        let addHeight = 0;
-        switch (type) {
-            case ChartSetting.TYPE_PIE:
-                if (indicesCount > 1) {
-                    throw new Error("多指标不支持饼图");
-                }
-                // 表格加上图的高度
-                chartHeight = width / 1.617;
-                // 查看有多少个值，因此就有多少行
-                let index = chartSetting.indices[0];
-                let map = new Map();
-                Object.entries(industryReport.brandReports).forEach(brandReport => {
-                    map.set(brandReport[1].data[index.indexId], true);
-                });
-                let dataCount = 0;
-                map.forEach(() => {
-                    dataCount++;
-                });
-                addHeight = (dataCount + 1) * ChartDrawer.SIZES.tableRowHeight;
-                break;
-            case ChartSetting.TYPE_STACK_BAR:
-            case ChartSetting.TYPE_SINGLE_BAR:
-                chartHeight = brandCount * ChartDrawer.SIZES.barWidth;
-                break;
-            default:
-                chartHeight = width / 1.617;
-        }
-        return {chartHeight, totalHeight: chartHeight + addHeight + ChartDrawer.SIZES.headerHeight, addHeight}
+        return {chartHeight: width / 1.617}
     }
 
     /**
      * 获取图的labels与各个指标对应的data
      * @param {ChartSetting} chartSetting
      * @param {IndustryReport} industryReport
-     * @param {Brand[]} brands
+     * @param {Map.<string, Brand>} brandMap
      * @private
-     * @return {{labels: string[], data: *[][], brandMap: Map<string, Brand>}} data的第i个元素，是第i个指标的所有品牌的数据，品牌数据的顺序，与labels的顺序相同
+     * @return {{labels: string[], data: *[][]}} data的第i个元素，是第i个指标的所有品牌的数据，品牌数据的顺序，与labels的顺序相同
      */
-    static _getLabelAndData(chartSetting, industryReport, brands) {
-        let brandMap = new Map();
-        for (let i = 0; i < brands.length; i++) {
-            brandMap.set(brands[i].brandId, brands[i]);
-        }
-
+    static _getLabelAndData(chartSetting, industryReport, brandMap) {
         let brandIds = Object.keys(industryReport.brandReports);
         let labels = [];
         let data = [];
@@ -165,7 +130,6 @@ export class ChartDrawer extends React.Component {
         return {
             labels,
             data,
-            brandMap,
         }
     }
 
@@ -299,8 +263,7 @@ export class ChartDrawer extends React.Component {
                 dataset.backgroundColor.push(colors[i] ? colors[i] : COLOR[i]);
             }
             dataConfig.datasets = [dataset];
-        }
-        if (type === ChartSetting.TYPE_RADAR) {
+        } else if (type === ChartSetting.TYPE_RADAR) {
             // 雷达图需要进行标准化工作
             let labels = [];
             let eachMax = [];
@@ -448,20 +411,59 @@ export class ChartDrawer extends React.Component {
     render() {
         let chartSetting = this.props.chartSetting;
         let type = ChartDrawer._getType(chartSetting);
-        let brandMap = this.state.brandMap;
-
+        let brandMap = this.props.brandMap;
 
         if (type === ChartSetting.TYPE_TABLE) {
+            let ths = [];
+            for (let i = 0; i < chartSetting.indices.length; i++) {
+                ths.push(
+                    <th key={i}>
+                        {chartSetting.indices[i].displayName}
+                    </th>
+                )
+            }
+            let trs = [];
+            Object.entries(this.props.industryReport.brandReports).forEach(pair => {
+                let tds = [];
+                for (let i = 0; i < chartSetting.indices.length; i++) {
+                    let data = pair[1].data[chartSetting.indices[i].indexId];
+                    tds.push(
+                        <td key={i}>
+                            {data === undefined ? "无数据" : data}
+                        </td>
+                    )
+                }
+                trs.push(
+                    <tr key={pair[0]}>
+                        <td>{brandMap.get(pair[0]) === undefined ? pair[0] : brandMap.get(pair[0]).brandName}</td>
+                        {tds}
+                    </tr>
+                )
+            });
+
+
             return (
                 <div style={this.props.style}>
                     <h3>
                         {chartSetting.title}
                     </h3>
+                    <Table striped bordered hover responsive>
+                        <thead>
+                        <tr>
+                            <th>品牌</th>
+                            {ths}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {trs}
+                        </tbody>
+                    </Table>
                 </div>
             );
         } else {
             let additionalElement = null;
             if (this.state.type === ChartSetting.TYPE_PIE) {
+                // 为饼图添加品牌对应数据的表格
                 if (chartSetting.indices.length > 1) {
                     throw new Error("饼图不支持多指标");
                 }
@@ -505,7 +507,7 @@ export class ChartDrawer extends React.Component {
             }
 
             return (
-                <div ref={instance => this.divElement = instance} style={this.props.style}>
+                <div style={this.props.style}>
                     <h3>
                         {chartSetting.title}
                     </h3>

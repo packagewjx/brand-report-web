@@ -4,7 +4,6 @@ import Index from "../../Model/Index";
 import {ChartSetting} from "./ChartSetting";
 import IndustryReport from "../../Model/IndustryReport";
 import {Button, TabPane} from 'reactstrap';
-import Brand from "../../Model/Brand";
 import {AutoSizer, CellMeasurer, CellMeasurerCache, List, WindowScroller} from "react-virtualized";
 import {ChartDrawer} from "./ChartDrawer";
 
@@ -15,7 +14,7 @@ export default class RootIndexTabPane extends React.Component {
         chartSettings: PropTypes.arrayOf(PropTypes.instanceOf(ChartSetting)),
         indices: PropTypes.arrayOf(PropTypes.instanceOf(Index)),
         industryReport: PropTypes.instanceOf(IndustryReport),
-        brands: PropTypes.arrayOf(PropTypes.instanceOf(Brand)),
+        brandMap: PropTypes.instanceOf(Map),
         tabId: PropTypes.any.isRequired,
         activeTab: PropTypes.any
     };
@@ -39,7 +38,7 @@ export default class RootIndexTabPane extends React.Component {
                 }) {
         return (
             <CellMeasurer key={key} cache={this.cellMeasureCache} columnIndex={0} parent={parent} rowIndex={index}>
-                <ChartDrawer brands={this.props.brands} industryReport={this.props.industryReport}
+                <ChartDrawer brandMap={this.props.brandMap} industryReport={this.props.industryReport}
                              chartSetting={this.props.chartSettings[index]} style={style} width={parent.props.width}/>
             </CellMeasurer>
         )

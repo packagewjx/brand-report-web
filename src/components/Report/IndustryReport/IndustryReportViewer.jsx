@@ -110,6 +110,10 @@ export default class IndustryReportViewer extends React.Component {
     render() {
         let navItems = [];
         let tabPanes = [];
+        let brandMap = new Map();
+        for (let i = 0; i < this.props.brands.length; i++) {
+            brandMap.set(this.props.brands[i].brandId, this.props.brands[i]);
+        }
 
         let chartSettings = getChartSettings(this.props.indices);
         chartSettings.forEach((chartSettings, rootIndex) => {
@@ -126,7 +130,7 @@ export default class IndustryReportViewer extends React.Component {
                 <RootIndexTabPane key={rootIndex.indexId} indices={this.props.indices} activeTab={this.state.activeTab}
                                   tabId={rootIndex.indexId} chartHeight={this.state.height}
                                   industryReport={this.props.industryReport} rootIndex={rootIndex}
-                                  chartSettings={chartSettings} brands={this.props.brands}/>
+                                  chartSettings={chartSettings} brandMap={brandMap}/>
             );
         });
 
