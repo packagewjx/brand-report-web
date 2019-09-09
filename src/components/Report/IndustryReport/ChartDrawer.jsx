@@ -47,7 +47,8 @@ export class ChartDrawer extends React.Component {
         brandMap: PropTypes.instanceOf(Map),
         style: PropTypes.any,
         width: PropTypes.number.isRequired,
-        measure: PropTypes.func
+        measure: PropTypes.func,
+        onHeightChanged: PropTypes.func
     };
 
     static SIZES = {
@@ -72,10 +73,16 @@ export class ChartDrawer extends React.Component {
         }
     }
 
+    componentDidUpdate(prevProps, prevState, prevContext) {
+        if (prevProps.width !== this.props.width) {
+            this.props.onHeightChanged();
+        }
+    }
+
     static getDerivedStateFromProps(props, prevState) {
+        let {chartHeight} = ChartDrawer.determineChartDrawerHeight(props.chartSetting, props.industryReport, props.width);
         if (props.chartSetting.type !== ChartSetting.TYPE_TABLE && prevState.chartConfig === null) {
             let type = ChartDrawer._getType(props.chartSetting);
-            let {chartHeight} = ChartDrawer.determineChartDrawerHeight(props.chartSetting, props.industryReport, props.width);
             let {labels, data} = ChartDrawer._getLabelAndData(props.chartSetting, props.industryReport, props.brandMap);
             let dataConfig = ChartDrawer._getChartDataConfig(type, labels, data, props.chartSetting.indices, props.chartSetting.colors);
             let chartConfig = ChartDrawer._getChartConfig(type, dataConfig, props.chartSetting);
@@ -84,6 +91,11 @@ export class ChartDrawer extends React.Component {
                 chartConfig: chartConfig,
                 chartHeight,
             };
+        }
+        if (chartHeight !== prevState.chartHeight) {
+            return {
+                chartHeight
+            }
         }
         return null;
     }

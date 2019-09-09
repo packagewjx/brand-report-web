@@ -24,7 +24,6 @@ export default class RootIndexTabPane extends React.Component {
 
 
         this.cellMeasureCache = new CellMeasurerCache({
-            minHeight: window.innerWidth / 2,
             fixedWidth: true
         })
     }
@@ -36,10 +35,16 @@ export default class RootIndexTabPane extends React.Component {
                     style        // Style object to be applied to cell (to position it);
                                  // This must be passed through to the rendered cell element.
                 }) {
+        let list = this.list;
+        let cellMeasureCache = this.cellMeasureCache;
         return (
             <CellMeasurer key={key} cache={this.cellMeasureCache} columnIndex={0} parent={parent} rowIndex={index}>
                 <ChartDrawer brandMap={this.props.brandMap} industryReport={this.props.industryReport}
-                             chartSetting={this.props.chartSettings[index]} style={style} width={parent.props.width}/>
+                             chartSetting={this.props.chartSettings[index]} style={style} width={parent.props.width}
+                             onHeightChanged={() => {
+                                 cellMeasureCache.clear(index);
+                                 list.recomputeRowHeights(index);
+                             }}/>
             </CellMeasurer>
         )
     }
