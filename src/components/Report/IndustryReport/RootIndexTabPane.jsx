@@ -55,16 +55,17 @@ export default class RootIndexTabPane extends React.Component {
         if (this.props.activeTab !== this.props.tabId) {
             return null;
         }
+        let overScanCount = 10 > this.props.chartSettings.length - 3 ? this.props.chartSettings.length - 3 : 10;
         // noinspection RequiredAttributes
         return (
-            <TabPane tabId={this.props.tabId} style={{height: "max-content"}}>
+            <TabPane tabId={this.props.tabId}>
                 <WindowScroller>
                     {({height, isScrolling, onChildScroll, scrollTop}) =>
                         <AutoSizer disableHeight={true}>
                             {({width}) =>
                                 <List ref={instance => self.list = instance} height={height} width={width}
                                       autoHeight={true} onScroll={onChildScroll} isScrolling={isScrolling}
-                                      scrollTop={scrollTop}
+                                      scrollTop={scrollTop} overscanRowCount={overScanCount}
                                       rowCount={this.props.chartSettings.length}
                                       deferredMeasurementCache={this.cellMeasureCache}
                                       rowHeight={this.cellMeasureCache.rowHeight}

@@ -51,7 +51,7 @@ const chartTypeDisplayName = {
     [ChartSetting.TYPE_PIE]: "饼图",
     [ChartSetting.TYPE_RADAR]: "雷达图",
     [ChartSetting.TYPE_SINGLE_BAR]: "条形图",
-    [ChartSetting.TYPE_STACK_BAR]: "堆叠图",
+    [ChartSetting.TYPE_STACK_BAR]: "堆叠条形图",
     [ChartSetting.TYPE_TABLE]: "表格"
 };
 
@@ -380,7 +380,8 @@ export default class IndexForm extends React.Component {
                             <ExtendedFormGroup label="绘图类型" value={index.annotations.chart_type}
                                                onChange={this.changeAnnotation.bind(this, "chart_type", false)}
                                                type="select" editorShow={this.props.enableEdit}
-                                               defaultValue={ChartSetting.TYPE_DEFAULT}>
+                                               defaultValue={ChartSetting.TYPE_DEFAULT}
+                                               valueDisplayName={(val) => chartTypeDisplayName[val]}>
                                 {IndexForm.chartTypeOptions}
                             </ExtendedFormGroup>
                             <FormGroup disabled={!this.props.enableEdit}>
@@ -395,7 +396,7 @@ export default class IndexForm extends React.Component {
                                 </div>
                                 <FormText>
                                     将子指标的集合起来，绘制到一个图中。<br/>
-                                    仅支持雷达图、堆叠图、表格
+                                    仅支持雷达图、堆叠条形图、表格
                                 </FormText>
                             </FormGroup>
                             <FormGroup disabled={!this.props.enableEdit}>

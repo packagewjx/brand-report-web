@@ -362,7 +362,6 @@ export class ChartDrawer extends React.Component {
             default:
                 throw new Error(`不支持${type}`);
             case ChartSetting.TYPE_SINGLE_BAR:
-            case ChartSetting.TYPE_STACK_BAR:
                 chartConfig.type = "horizontalBar";
                 chartConfig.options.scales = {
                     xAxes: [{
@@ -372,6 +371,31 @@ export class ChartDrawer extends React.Component {
                             }
                         }
                     }],
+                };
+                chartConfig.options.tooltips = {
+                    callbacks: {
+                        label: function (tooltipItem, data) {
+                            return data.datasets[tooltipItem.datasetIndex].label + ": "
+                                + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]
+                                + chartSetting.indices[0].unit;
+                        }
+                    }
+                };
+                break;
+            case ChartSetting.TYPE_STACK_BAR:
+                chartConfig.type = "horizontalBar";
+                chartConfig.options.scales = {
+                    xAxes: [{
+                        stacked: true,
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value + chartSetting.indices[0].unit;
+                            }
+                        }
+                    }],
+                    yAxes: [{
+                        stacked: true
+                    }]
                 };
                 chartConfig.options.tooltips = {
                     callbacks: {
