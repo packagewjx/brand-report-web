@@ -356,8 +356,12 @@ export default class IndexForm extends React.Component {
                         </label>
                     </div>
                 </FormGroup>
-                <h4>计分设置</h4>
-                {scoreFormGroup}
+                {Index.TYPE_INDICES === this.props.index.type ? null :
+                    <>
+                        <h4>计分设置</h4>
+                        {scoreFormGroup}
+                    </>
+                }
                 <h4>绘图设置</h4>
                 <FormGroup>
                     <div className="checkbox c-checkbox">
@@ -373,7 +377,7 @@ export default class IndexForm extends React.Component {
                 {
                     "true" === index.annotations["chart_disable"] ? null :
                         <>
-                            <ExtendedFormGroup label="绘图类型" value={chartTypeDisplayName[index.annotations.chart_type]}
+                            <ExtendedFormGroup label="绘图类型" value={index.annotations.chart_type}
                                                onChange={this.changeAnnotation.bind(this, "chart_type", false)}
                                                type="select" editorShow={this.props.enableEdit}
                                                defaultValue={ChartSetting.TYPE_DEFAULT}>
@@ -392,6 +396,20 @@ export default class IndexForm extends React.Component {
                                 <FormText>
                                     将子指标的集合起来，绘制到一个图中。<br/>
                                     仅支持雷达图、堆叠图、表格
+                                </FormText>
+                            </FormGroup>
+                            <FormGroup disabled={!this.props.enableEdit}>
+                                <div className="checkbox c-checkbox">
+                                    <label>
+                                        <Input type="checkbox"
+                                               checked={"true" === index.annotations["chart_disable-sub-index-graph"]}
+                                               onChange={this.changeAnnotation.bind(this, "chart_disable-sub-index-graph", true)}
+                                               disabled={!this.props.enableEdit}/>
+                                        <span className="fa fa-check"/>不绘制子指标图表
+                                    </label>
+                                </div>
+                                <FormText>
+                                    若启用，则不会绘制本指标树下子指标的图表
                                 </FormText>
                             </FormGroup>
                             <ExtendedFormGroup label="指标颜色"

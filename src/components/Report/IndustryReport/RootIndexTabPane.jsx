@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import Index from "../../Model/Index";
 import {ChartSetting} from "./ChartSetting";
 import IndustryReport from "../../Model/IndustryReport";
-import {Button, TabPane} from 'reactstrap';
+import {TabPane} from 'reactstrap';
 import {AutoSizer, CellMeasurer, CellMeasurerCache, List, WindowScroller} from "react-virtualized";
 import {ChartDrawer} from "./ChartDrawer";
 
@@ -38,7 +38,8 @@ export default class RootIndexTabPane extends React.Component {
         let list = this.list;
         let cellMeasureCache = this.cellMeasureCache;
         return (
-            <CellMeasurer key={key} cache={this.cellMeasureCache} columnIndex={0} parent={parent} rowIndex={index}>
+            <CellMeasurer key={key} cache={this.cellMeasureCache} columnIndex={0} parent={parent} rowIndex={index}
+                          style={style}>
                 <ChartDrawer brandMap={this.props.brandMap} industryReport={this.props.industryReport}
                              chartSetting={this.props.chartSettings[index]} style={style} width={parent.props.width}
                              onHeightChanged={() => {
@@ -56,19 +57,19 @@ export default class RootIndexTabPane extends React.Component {
         }
         // noinspection RequiredAttributes
         return (
-            <TabPane tabId={this.props.tabId}>
-                <Button onClick={() => console.log(this)}>按我</Button>
+            <TabPane tabId={this.props.tabId} style={{height: "max-content"}}>
                 <WindowScroller>
                     {({height, isScrolling, onChildScroll, scrollTop}) =>
                         <AutoSizer disableHeight={true}>
                             {({width}) =>
                                 <List ref={instance => self.list = instance} height={height} width={width}
-                                      autoHeight={true}
-                                      columnWidth={this.props.width} onScroll={onChildScroll} isScrolling={isScrolling}
-                                      scrollTop={scrollTop} rowCount={this.props.chartSettings.length}
+                                      autoHeight={true} onScroll={onChildScroll} isScrolling={isScrolling}
+                                      scrollTop={scrollTop}
+                                      rowCount={this.props.chartSettings.length}
                                       deferredMeasurementCache={this.cellMeasureCache}
                                       rowHeight={this.cellMeasureCache.rowHeight}
-                                      rowRenderer={this.rowRenderer.bind(this)}/>}
+                                      rowRenderer={this.rowRenderer.bind(this)}/>
+                            }
                         </AutoSizer>
                     }
                 </WindowScroller>

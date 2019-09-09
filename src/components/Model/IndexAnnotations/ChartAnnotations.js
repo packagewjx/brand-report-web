@@ -16,6 +16,11 @@ export default class ChartAnnotations {
     "chart_draw-all-sub-index" = "false";
 
     /**
+     * 若为true，则不绘制所有子指标的图
+     */
+    "chart_disable-sub-index-graph" = "false";
+
+    /**
      * 逗号分隔的string颜色列表，逗号之间不能有空格
      * @type {string | undefined}
      */
@@ -39,6 +44,8 @@ export default class ChartAnnotations {
         a.chart_colors = index.annotations.chart_colors;
         a["chart_aspect-ratio"] = index.annotations["chart_aspect-ratio"];
         a["chart_draw-all-sub-index"] = index.annotations["chart_draw-all-sub-index"];
+        a["chart_disable-sub-index-graph"] = index.annotations["chart_disable-sub-index-graph"] === undefined ?
+            a["chart_disable-sub-index-graph"] : index.annotations["chart_disable-sub-index-graph"];
         return a;
     }
 

@@ -108,7 +108,15 @@ export class ChartDrawer extends React.Component {
      * @return {{chartHeight: number}} chartHeight是图的高度，totalHeight是组件总高度，addHeight是额外组件的高度
      */
     static determineChartDrawerHeight(chartSetting, industryReport, width) {
-        return {chartHeight: width / 1.617}
+        let type = ChartDrawer._getType(chartSetting);
+        let brandCount = Object.keys(industryReport.brandReports).length + 1;
+        switch (type) {
+            case ChartSetting.TYPE_SINGLE_BAR:
+            case ChartSetting.TYPE_STACK_BAR:
+                return {chartHeight: ChartDrawer.SIZES.barWidth * brandCount};
+            default:
+                return {chartHeight: width / 1.617}
+        }
     }
 
     /**

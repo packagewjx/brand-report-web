@@ -57,10 +57,13 @@ function indexNodeTraversal(indexNode) {
         }
     }
 
-    // 加入子节点的
-    for (let i = 0; i < indexNode.children.length; i++) {
-        result = result.concat(indexNodeTraversal(indexNode.children[i]));
+    if ("true" !== chartAnnotation["chart_disable-sub-index-graph"]) {
+        // 加入子节点的
+        for (let i = 0; i < indexNode.children.length; i++) {
+            result = result.concat(indexNodeTraversal(indexNode.children[i]));
+        }
     }
+
 
     return result;
 
