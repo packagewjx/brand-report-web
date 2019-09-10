@@ -3,16 +3,21 @@ import PropTypes from "prop-types";
 import {ChartSetting} from "./ChartSetting";
 import IndustryReport from "../../Model/IndustryReport";
 import Brand from "../../Model/Brand";
+import Slider from 'rc-slider';
+import 'rc-slider/assets/index.css';
 import {generateRandomId} from "../../Utils/UtilFunctions";
 import Index from "../../Model/Index";
 import ChartJSDataConfigObject from "./ChartJSDataConfigObject";
 import ChartJSDataSet from "./ChartJSDataSet";
 import Chart from 'chart.js';
-import {Table} from "reactstrap";
+import {Button, FormGroup, Input, Popover, PopoverBody, PopoverHeader, Table} from "reactstrap";
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import {faCog} from "@fortawesome/free-solid-svg-icons"
 import ChartJSConfigObject from "./ChartJSConfigObject";
 
 const SORT_ASC = "asc";
 const SORT_DESC = "desc";
+const SORT_INDEX_ALL = "$$ALL$$";
 const COLOR = [
     '#23b7e5',
     '#7266ba',
@@ -35,6 +40,7 @@ const COLOR = [
     "rgb(153, 102, 255)",
     "rgb(201, 203, 207)"
 ];
+const sizeMap = new Map();
 
 export class ChartDrawer extends React.Component {
     static propTypes = {
@@ -47,29 +53,34 @@ export class ChartDrawer extends React.Component {
         brandMap: PropTypes.instanceOf(Map),
         style: PropTypes.any,
         width: PropTypes.number.isRequired,
-        measure: PropTypes.func,
         onHeightChanged: PropTypes.func
     };
 
     static SIZES = {
-        headerHeight: 40,
-        barWidth: 24,
-        tableRowHeight: 30,
+        barWidth: {
+            min: 10,
+            max: 30,
+        },
+        aspectRatio: {
+            min: 3,
+            max: 0.5
+        }
     };
 
     constructor(props) {
         super(props);
         this.canvasId = generateRandomId();
+        this.settingBtnId = generateRandomId();
         this.doDraw = this.doDraw.bind(this);
         this.state = {
             chartConfig: null,
             type: null,
-            chartHeight: 0,
-            addHeight: 0,
+            settingOpen: false,
             sort: {
-                index: null,
-                order: null
-            }
+                index: undefined,
+                order: SORT_DESC
+            },
+            chartSize: sizeMap.get(props.chartSetting.title) === undefined ? 50 : sizeMap.get(props.chartSetting.title)
         }
     }
 
@@ -80,7 +91,6 @@ export class ChartDrawer extends React.Component {
     }
 
     static getDerivedStateFromProps(props, prevState) {
-        let {chartHeight} = ChartDrawer.determineChartDrawerHeight(props.chartSetting, props.industryReport, props.width);
         if (props.chartSetting.type !== ChartSetting.TYPE_TABLE && prevState.chartConfig === null) {
             let type = ChartDrawer._getType(props.chartSetting);
             let {labels, data} = ChartDrawer._getLabelAndData(props.chartSetting, props.industryReport, props.brandMap);
@@ -89,33 +99,27 @@ export class ChartDrawer extends React.Component {
             return {
                 type: type,
                 chartConfig: chartConfig,
-                chartHeight,
             };
-        }
-        if (chartHeight !== prevState.chartHeight) {
-            return {
-                chartHeight
-            }
         }
         return null;
     }
 
     /**
      * 判断ChartDrawer组件的高度
-     * @param {ChartSetting} chartSetting
+     * @param {string} type 图类型
      * @param {IndustryReport} industryReport
      * @param {number} width 组件的宽度
-     * @return {{chartHeight: number}} chartHeight是图的高度，totalHeight是组件总高度，addHeight是额外组件的高度
+     * @param {number} ratio 放大比例
+     * @return {number} chartHeight是图的高度，totalHeight是组件总高度，addHeight是额外组件的高度
      */
-    static determineChartDrawerHeight(chartSetting, industryReport, width) {
-        let type = ChartDrawer._getType(chartSetting);
+    static determineChartHeight(type, industryReport, width, ratio) {
         let brandCount = Object.keys(industryReport.brandReports).length + 1;
         switch (type) {
             case ChartSetting.TYPE_SINGLE_BAR:
             case ChartSetting.TYPE_STACK_BAR:
-                return {chartHeight: ChartDrawer.SIZES.barWidth * brandCount};
+                return (ChartDrawer.SIZES.barWidth.min + (ChartDrawer.SIZES.barWidth.max - ChartDrawer.SIZES.barWidth.min) * ratio / 100) * brandCount;
             default:
-                return {chartHeight: width / 1.617}
+                return width / (ChartDrawer.SIZES.aspectRatio.min - (ChartDrawer.SIZES.aspectRatio.min - ChartDrawer.SIZES.aspectRatio.max) * ratio / 100)
         }
     }
 
@@ -446,16 +450,76 @@ export class ChartDrawer extends React.Component {
         this.chart = new Chart(this.canvas, this.state.chartConfig);
     }
 
+    onSortChange() {
+        if (this.state.sort.index === undefined)
+            return;
+        let compareFn = null;
+        if (this.state.sort.order === SORT_ASC) {
+            compareFn = function (array, a, b) {
+                return array[a] - array[b];
+            }
+        } else {
+            compareFn = function (array, a, b) {
+                return array[b] - array[a];
+            }
+        }
+
+        let dataConfig = this.state.chartConfig.data;
+        let swapArray = new Array(dataConfig.labels.length);
+        for (let n = 0; n < this.state.chartConfig.data.labels.length; n++) {
+            swapArray[n] = n;
+        }
+
+        if (this.state.sort.index === SORT_INDEX_ALL) {
+            let sum = new Array(dataConfig.labels.length);
+            for (let i = 0; i < sum.length; i++) {
+                sum[i] = 0;
+            }
+            for (let i = 0; i < this.state.chartConfig.data.datasets.length; i++) {
+                let chartJSDataSet = this.state.chartConfig.data.datasets[i];
+                for (let j = 0; j < chartJSDataSet.data.length; j++) {
+                    sum[j] += chartJSDataSet.data[j]
+                }
+            }
+            swapArray.sort(compareFn.bind(this, sum));
+        } else {
+            let sortIndexDatasetIndex = 0;
+            for (let i = 0; i < this.props.chartSetting.indices.length; i++) {
+                if (this.state.sort.index === this.props.chartSetting.indices[i].indexId) {
+                    sortIndexDatasetIndex = i;
+                    break;
+                }
+            }
+            let dataset = dataConfig.datasets[sortIndexDatasetIndex];
+            swapArray.sort(compareFn.bind(this, dataset.data));
+        }
+        let newLabels = new Array(dataConfig.labels.length);
+        for (let i = 0; i < swapArray.length; i++) {
+            newLabels[i] = dataConfig.labels[swapArray[i]];
+        }
+        dataConfig.labels = newLabels;
+        for (let i = 0; i < dataConfig.datasets.length; i++) {
+            let newData = new Array(dataConfig.labels.length);
+            for (let j = 0; j < swapArray.length; j++) {
+                newData[j] = dataConfig.datasets[i].data[swapArray[j]];
+            }
+            dataConfig.datasets[i].data = newData;
+        }
+        this.chart.update();
+    }
+
     componentWillUnmount() {
         if (this.props.chartSetting.type !== ChartSetting.TYPE_TABLE) {
             this.chart.destroy();
         }
+        sizeMap.set(this.props.chartSetting.title, this.state.chartSize);
     }
 
     render() {
         let chartSetting = this.props.chartSetting;
         let type = ChartDrawer._getType(chartSetting);
         let brandMap = this.props.brandMap;
+        let height = ChartDrawer.determineChartHeight(type, this.props.industryReport, this.props.width, this.state.chartSize);
 
         if (type === ChartSetting.TYPE_TABLE) {
             let ths = [];
@@ -550,15 +614,78 @@ export class ChartDrawer extends React.Component {
                 )
             }
 
+            let sortOptions = [];
+            for (let i = 0; i < this.props.chartSetting.indices.length; i++) {
+                sortOptions.push(
+                    <option key={i}
+                            value={this.props.chartSetting.indices[i].indexId}>{this.props.chartSetting.indices[i].displayName}
+                    </option>
+                )
+            }
+
             return (
                 <div style={this.props.style}>
                     <h3>
                         {chartSetting.title}
+                        <span className="float-right">
+                            <Button size={"xs"} id={this.settingBtnId}>
+                                <FontAwesomeIcon icon={faCog}/>
+                            </Button>
+                        </span>
                     </h3>
-                    <div style={{height: this.state.chartHeight}}>
+                    <div style={{height: height}}>
                         <canvas ref={instance => this.canvas = instance} id={this.canvasId}/>
                     </div>
                     {additionalElement}
+                    <Popover placement="bottom-start" trigger="legacy" isOpen={this.state.settingOpen}
+                             target={this.settingBtnId}
+                             toggle={() => this.setState({settingOpen: !this.state.settingOpen})}>
+                        <PopoverHeader>设置</PopoverHeader>
+                        <PopoverBody>
+                            <form style={{width: 250}}>
+                                {/*条形图与堆叠条形图能够使用排序选项*/}
+                                {this.state.type === ChartSetting.TYPE_STACK_BAR ||
+                                this.state.type === ChartSetting.TYPE_SINGLE_BAR ?
+                                    <>
+                                        <FormGroup>
+                                            <label>排序指标</label>
+                                            <Input type="select" value={this.state.sort.index}
+                                                   onChange={(e) => this.setState({
+                                                       sort: {
+                                                           index: e.target.value,
+                                                           order: this.state.sort.order
+                                                       }
+                                                   }, this.onSortChange.bind(this))}>>
+                                                <option value={undefined}>未指定</option>
+                                                <option value={SORT_INDEX_ALL}>总和</option>
+                                                {sortOptions}
+                                            </Input>
+                                        </FormGroup>
+                                        <FormGroup>
+                                            <label>顺序</label>
+                                            <Input type="select" value={this.state.sort.order}
+                                                   onChange={(e) => this.setState({
+                                                       sort: {
+                                                           index: this.state.sort.index,
+                                                           order: e.target.value
+                                                       }
+                                                   }, this.onSortChange.bind(this))}>
+                                                <option value={SORT_ASC}>升序</option>
+                                                <option value={SORT_DESC}>降序</option>
+                                            </Input>
+                                        </FormGroup>
+                                    </>
+                                    : null
+                                }
+                                <FormGroup>
+                                    <label>图表大小</label>
+                                    <Slider
+                                        onChange={(val) => this.setState({chartSize: val}, this.props.onHeightChanged)}
+                                        value={this.state.chartSize}/>
+                                </FormGroup>
+                            </form>
+                        </PopoverBody>
+                    </Popover>
                 </div>
             );
         }
