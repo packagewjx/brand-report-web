@@ -1,8 +1,4 @@
-/**
- * @callback dataAccessor
- * @param obj 报告对象
- * @return {Number | string} 数据字段，通常是数字，字符串
- */
+import Chart from "chart.js";
 
 /**
  * 构建
