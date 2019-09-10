@@ -124,6 +124,19 @@ export class ChartDrawer extends React.Component {
     }
 
     /**
+     * @param {Index} index
+     * @param {*} data
+     * @return {string}
+     */
+    static getDisplayData(index, data) {
+        if (data === undefined) {
+            return "无数据";
+        }
+        data = typeof data === "boolean" ? (data ? "是" : "否") : data;
+        return index.type === Index.TYPE_NUMBER ? `${data}${index.unit}` : data;
+    }
+
+    /**
      * 获取图的labels与各个指标对应的data
      * @param {ChartSetting} chartSetting
      * @param {IndustryReport} industryReport
@@ -275,7 +288,7 @@ export class ChartDrawer extends React.Component {
             let dataLabels = [];
             let pieData = [];
             map.forEach((value, key) => {
-                dataLabels.push(key === undefined ? "无数据" : key);
+                dataLabels.push(ChartDrawer.getDisplayData(indices[0], key));
                 pieData.push(value);
             });
             dataConfig.labels = dataLabels;
@@ -537,7 +550,7 @@ export class ChartDrawer extends React.Component {
                     let data = pair[1].data[chartSetting.indices[i].indexId];
                     tds.push(
                         <td key={i}>
-                            {data === undefined ? "无数据" : data}
+                            {ChartDrawer.getDisplayData(chartSetting.indices[i], data)}
                         </td>
                     )
                 }
@@ -579,7 +592,7 @@ export class ChartDrawer extends React.Component {
                 let index = chartSetting.indices[0];
                 let brandReports = this.props.industryReport.brandReports;
                 Object.keys(brandReports).forEach(key => {
-                    let datum = brandReports[key].data[index.indexId] === undefined ? "无数据" : brandReports[key].data[index.indexId];
+                    let datum = ChartDrawer.getDisplayData(index, brandReports[key].data[index.indexId]);
                     let brandName = brandMap.has(brandReports[key].brandId) ?
                         brandMap.get(brandReports[key].brandId).brandName : brandReports[key].brandId;
                     if (map.has(datum)) {
