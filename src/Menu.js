@@ -37,6 +37,10 @@ const Menu = [
             {
                 name: '专家评论管理',
                 path: '/brand-report-comment'
+            },
+            {
+                name: '数据管理',
+                path: '/collection'
             }
         ],
     },

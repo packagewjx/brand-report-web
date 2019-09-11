@@ -104,6 +104,8 @@ const CommentManagementPage = lazy(() => import("./components/Report/Comment/Com
 const IndustryReportPage = lazy(() => import("./components/Report/IndustryReport/IndustryReportPage"));
 const IndustryReportManagementPage = lazy(() => import("./components/Report/IndustryReport/IndustryReportManagementPage"));
 const IndexManagementPage = lazy(() => import("./components/Index/IndexManagementPage"));
+const CollectionManagementPage = lazy(() => import("./components/Report/BrandReport/CollectionManagementPage"));
+const CollectionPage = lazy(() => import("./components/Report/BrandReport/CollectionPage"));
 
 // List of routes that uses the page layout
 // listed here to Switch between layouts
@@ -250,6 +252,9 @@ const Routes = ({location}) => {
                                     <Route path="/industry-report/:id" component={waitFor(IndustryReportPage)}/>
                                     <Route path="/industry-report" exact={true}
                                            component={waitFor((IndustryReportManagementPage))}/>
+                                    <Route path="/collection" exact={true}
+                                           component={waitFor((CollectionManagementPage))}/>
+                                    <Route path="/collection/:id" component={waitFor(CollectionPage)}/>
 
                                     {/*指标管理*/}
                                     <Route path="/index" exact={true} component={waitFor(IndexManagementPage)}/>
@@ -261,7 +266,7 @@ const Routes = ({location}) => {
                     </CSSTransition>
                 </TransitionGroup>
             </Base>
-        )
+        );
     }
 }
 

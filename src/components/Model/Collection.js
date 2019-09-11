@@ -5,6 +5,8 @@ export default class Collection {
 
     collectionId;
 
+    brandId;
+
     year;
 
     periodTimeNumber;
