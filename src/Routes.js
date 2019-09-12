@@ -105,6 +105,10 @@ const IndustryReportPage = lazy(() => import("./components/Report/IndustryReport
 const IndustryReportManagementPage = lazy(() => import("./components/Report/IndustryReport/IndustryReportManagementPage"));
 const IndexManagementPage = lazy(() => import("./components/Index/IndexManagementPage"));
 
+const WordMouthAdd = lazy(() => import("./components/WordMouth/WordMouthAdd"));
+const WordMouthGenerate = lazy(() => import("./components/WordMouth/WordMouthGenerate"));
+const ProductWordOfMouthView = lazy(() => import("./components/WordMouth/WordMouthView/ProductWordOfMouthView"));
+
 // List of routes that uses the page layout
 // listed here to Switch between layouts
 // depending on the current pathname
@@ -254,7 +258,12 @@ const Routes = ({location}) => {
                                     {/*指标管理*/}
                                     <Route path="/index" exact={true} component={waitFor(IndexManagementPage)}/>
 
-                                    <Redirect to="/dashboardv1"/>
+                                    {/*/!*口碑分析*!/*/}
+                                    <Route path="/wordMouth-productlist" exact={true} component={waitFor(WordMouthGenerate)}/>
+                                    <Route path="/wordMouth-productlist/:product" component={waitFor(ProductWordOfMouthView)}/>
+                                    <Route path="/wordMouth-productadd" component={waitFor(WordMouthAdd)}/>
+
+                                    <Redirect to="/dashboardv2"/>
                                 </Switch>
                             </Suspense>
                         </div>
