@@ -18,7 +18,10 @@ import {
 import ExtendedFormGroup from "./ExtendedFormGroup";
 import StepScoreDefinitionEditor from "./StepScoreDefinitionEditor";
 import EnumScoreDefinitionEditor from "./EnumScoreDefinitionEditor";
-import {FormGroup, FormText, Input} from 'reactstrap';
+import {Button, Col, FormGroup, FormText, Input, Row} from 'reactstrap';
+import {EnumRange, NumericRange} from "../Model/Range";
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faMinus, faPlus} from '@fortawesome/free-solid-svg-icons';
 
 const TypeDisplayName = {
     number: "数字",
@@ -67,6 +70,7 @@ export default class IndexForm extends React.Component {
     constructor(props) {
         super(props);
         this.changeAnnotation = this.changeAnnotation.bind(this);
+        this._getRangeFormGroup = this._getRangeFormGroup.bind(this);
     }
 
 
@@ -288,10 +292,156 @@ export default class IndexForm extends React.Component {
         return scoreForm;
     }
 
+    /**
+     *
+     * @param {Index} index
+     * @private
+     */
+    _getRangeFormGroup(index) {
+
+
+        switch (index.type) {
+            case Index.TYPE_NUMBER:
+                index.range = index.range === null || index.range === undefined
+                    ? new NumericRange() : index.range;
+
+                let EnableCheckbox = (props) => {
+                    return (
+                        <label className="checkbox c-checkbox">
+                            <Input type="checkbox" checked={index.range[props.name] !== props.defaultVal}
+                                   onChange={e => {
+                                       if (e.target.checked) {
+                                           index.range[props.name] = 0;
+                                           this.props.onChange(index);
+                                       } else {
+                                           index.range[props.name] = props.defaultVal;
+                                           this.props.onChange(index);
+                                       }
+                                   }}/>
+                            <span className="fa fa-check"/></label>
+                    );
+                };
+
+                return (
+                    <>
+                        <Row>
+                            {this.props.enableEdit ?
+                                <Col xs={1}>
+                                    <EnableCheckbox name={"min"} defaultVal={NumericRange.DEFAULT_MIN}/>
+                                </Col>
+                                : null}
+                            <Col xs={this.props.enableEdit ? 11 : 12}>
+                                <ExtendedFormGroup label="最小值" type="number" value={index.range.min}
+                                                   editorShow={this.props.enableEdit}
+                                                   inputDisabled={index.range.min === NumericRange.DEFAULT_MIN}
+                                                   onChange={e => {
+                                                       index.range.min = parseFloat(e.target.value);
+                                                       this.props.onChange(index);
+                                                   }}/>
+                            </Col>
+                        </Row>
+                        <Row>
+                            {this.props.enableEdit ?
+                                <Col xs={1}>
+                                    <EnableCheckbox name={"max"} defaultVal={NumericRange.DEFAULT_MAX}/>
+                                </Col>
+                                : null}
+                            <Col xs={this.props.enableEdit ? 11 : 12}>
+                                <ExtendedFormGroup label="最大值" type="number" value={index.range.max}
+                                                   editorShow={this.props.enableEdit}
+                                                   inputDisabled={index.range.max === NumericRange.DEFAULT_MAX}
+                                                   onChange={e => {
+                                                       index.range.max = parseFloat(e.target.value);
+                                                       this.props.onChange(index);
+                                                   }}/>
+                            </Col>
+                        </Row>
+                        <Row>
+                            {this.props.enableEdit ?
+                                <Col xs={1}>
+                                    <EnableCheckbox name="step" defaultVal={null}/>
+                                </Col>
+                                : null}
+                            <Col xs={this.props.enableEdit ? 11 : 12}>
+                                <ExtendedFormGroup label="步进" type="number"
+                                                   value={index.range.step === null ? undefined : index.range.step}
+                                                   editorShow={this.props.enableEdit}
+                                                   inputDisabled={index.range.step === null}
+                                                   onChange={e => {
+                                                       index.range.step = parseFloat(e.target.value);
+                                                       this.props.onChange(index);
+                                                   }}/>
+                            </Col>
+                        </Row>
+
+                    </>
+                );
+            case Index.TYPE_ENUM:
+                index.range = index.range === null || index.range === undefined ? new EnumRange() : index.range;
+                let formGroups = [];
+                for (let i = 0; i < index.range.allowableValues.length; i++) {
+                    formGroups.push(
+                        <Row>
+                            {this.props.enableEdit ?
+                                <>
+                                    <Col xs={10}>
+                                        <Input value={index.range.allowableValues[i]} onChange={e => {
+                                            index.range.allowableValues[i] = e.target.value;
+                                            this.props.onChange(index);
+                                        }}/>
+                                    </Col>
+                                    <Col xs={2}>
+                                        <Button size="sm" color="danger" onClick={() => {
+                                            index.range.allowableValues.splice(i, 1);
+                                            this.props.onChange(index);
+                                        }}>
+                                            <FontAwesomeIcon icon={faMinus}/>
+                                        </Button>
+                                    </Col>
+                                </>
+                                :
+                                <Col>
+                                    {index.range.allowableValues[i]}
+                                </Col>
+                            }
+                        </Row>
+                    )
+                }
+
+                return (
+                    <Row>
+                        <Col xs={2}>
+                            可取值
+                        </Col>
+                        <Col>
+                            {formGroups}
+                            {this.props.enableEdit ?
+                                <Row>
+                                    <Col>
+                                        <Button color="success" onClick={() => {
+                                            index.range.allowableValues.push("");
+                                            this.props.onChange(index);
+                                        }}>
+                                            <FontAwesomeIcon icon={faPlus}/>
+                                        </Button>
+                                    </Col>
+                                </Row>
+                                :null}
+                        </Col>
+                    </Row>
+                );
+            case Index.TYPE_INDICES:
+            case Index.TYPE_BOOL:
+            case Index.TYPE_STRING:
+                return "无需设置"
+        }
+    }
+
     render() {
         let index = this.props.index;
         let scoreAnnotation = getScoreAnnotationFromIndex(index);
         let scoreFormGroup = this._getScoreFormGroups(scoreAnnotation);
+        let rangeFormGroup = this._getRangeFormGroup(index);
 
         return (
             <form className="index-form">
@@ -360,6 +510,8 @@ export default class IndexForm extends React.Component {
                     <>
                         <h4>计分设置</h4>
                         {scoreFormGroup}
+                        <h4>值域设置</h4>
+                        {rangeFormGroup}
                     </>
                 }
                 <h4>绘图设置</h4>

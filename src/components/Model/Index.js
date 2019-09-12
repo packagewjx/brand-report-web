@@ -23,6 +23,11 @@ export default class Index {
 
     period;
 
+    /**
+     * @type {NumericRange|EnumRange}
+     */
+    range;
+
     description = "";
 
     unit = "";
