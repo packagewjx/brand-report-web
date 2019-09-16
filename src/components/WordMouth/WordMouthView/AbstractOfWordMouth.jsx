@@ -17,7 +17,7 @@ export default class AbstractOfWordMouth extends React.Component {
         let self = this;
         let product_pinyin = this.props.product_pinyin;
         // 获取概要信息
-        let url = 'http://110.64.66.203:5000/' + product_pinyin + '/home';
+        let url = 'http://localhost:5000/' + product_pinyin + '/home';
         $.get(url)
             .then((response) => {
                 // 画图

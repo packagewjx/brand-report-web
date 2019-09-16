@@ -34,7 +34,7 @@ export default class BrandOfWordMouth extends React.Component {
     componentDidMount() {
         let product_pinyin = this.props.product_pinyin;
         // 获取概要信息
-        let url = 'http://110.64.66.203:5000/' + product_pinyin + '/aspect';
+        let url = 'http://localhost:5000/' + product_pinyin + '/aspect';
         $.get(url)
             .then((response) => {
                 // this.setState({data:response.data})
@@ -69,7 +69,7 @@ export default class BrandOfWordMouth extends React.Component {
         // console.log(eventKey);
         let product_pinyin = this.props.product_pinyin;
 
-        let url = 'http://110.64.66.203:5000/' + product_pinyin + '/aspect/' + String(eventKey);
+        let url = 'http://localhost:5000/' + product_pinyin + '/aspect/' + String(eventKey);
         $.get(url)
             .then((response) => {
                 // console.log(response.data)
@@ -93,15 +93,16 @@ export default class BrandOfWordMouth extends React.Component {
                     tables.push(
                         <tr>
                             <td>
-                                <a href={window.self.location.href + "#div" + category_id_str}>{response.data.category[category_id_str]}</a>
+                                {/*<a href={window.self.location.href + "#div" + category_id_str}>{response.data.category[category_id_str]}</a>*/}
+                                <a >{response.data.category[category_id_str]}</a>
                             </td>
                             <td>
                                 {response.data.statistic_data[category_id_str][0] + response.data.statistic_data[category_id_str][1] +
                                 response.data.statistic_data[category_id_str][2]}
                             </td>
-                            <td>
-                                <a href="javascript:void(0)" target="_blank">查看评论</a>
-                            </td>
+                            {/*<td>*/}
+                            {/*    <a href="javascript:void(0)" target="_blank">查看评论</a>*/}
+                            {/*</td>*/}
                         </tr>
                     )
                     // 画图模块
@@ -241,7 +242,7 @@ export default class BrandOfWordMouth extends React.Component {
                         <tr>
                             <th>产品类别</th>
                             <th>数量</th>
-                            <th>查看</th>
+                            {/*<th>查看</th>*/}
                         </tr>
                         </thead>
                         <tbody>

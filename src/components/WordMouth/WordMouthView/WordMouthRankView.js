@@ -15,7 +15,7 @@ export default class RankListPanel extends React.Component {
             rowArray.push(
                 <tr>
                     <td>{i+1}</td>
-                    <td><a href="javascript:void(0)" target="_blank">{brandsInfo[proportions[i][0]]} </a></td>
+                    <td><a target="_blank">{brandsInfo[proportions[i][0]]} </a></td>
                     <td>{statistic_data[proportions[i][0]][0] + statistic_data[proportions[i][0]][1] + statistic_data[proportions[i][0]][2]}</td>
                     <td>{flag? this.props.dict_good_proportions[proportions[i][0]] :proportions[i][1]}</td>
                 </tr>

@@ -16,7 +16,22 @@ export default class WordMouthGenerate extends React.Component {
     componentDidMount() {
         let self = this;
 
-        $.get('http://110.64.66.203:5000/product/list')
+        // $.ajax({
+        //     url: "http://word-mouth-front:5000/product/list",
+        //     type: "GET",
+        //     crossDomain: true,
+        //     dataType: "json",
+        //     contentType: 'application/json',
+        //     success: function(data, status) {
+        //         console.log(data,status);
+        //     }
+        // });
+
+        $.get('http://localhost:5000/product/list'
+        //     ,function(data,status){
+        //     alert("数据: " + data + "\n状态: " + status);
+        // }
+        )
             .then((response) => {
                 self.setState({data: response.data})
             });
