@@ -6,6 +6,9 @@ import Collection from "../../Model/Collection";
 import {PERIOD} from "../../Model/Constants";
 import SpinnerCircle from "../../Utils/SpinnerCircle";
 import ApiClient from "../../Utils/ApiClient";
+import Index from "../../Model/Index";
+import ReactTable from 'react-table';
+import {Card} from 'reactstrap';
 
 /**
  *
@@ -61,9 +64,11 @@ class CollectionPage extends React.Component {
     constructor(props) {
         super(props);
 
+        this.fetchData = this.fetchData.bind(this);
         this.state = {
             collection: null,
             brandName: null,
+            indexMap: null,
         }
     }
 
@@ -77,7 +82,11 @@ class CollectionPage extends React.Component {
         };
     }
 
-    componentDidUpdate(prevProps, prevState, prevContext) {
+    componentDidMount() {
+        this.fetchData();
+    }
+
+    fetchData() {
         if (this.state.collection === null) {
             ApiClient.get("collection", this.props.match.params.id)
                 .then((response) => {
@@ -93,7 +102,8 @@ class CollectionPage extends React.Component {
                             })
                     }
                 })
-        } else if (this.state.brandName === null) {
+        }
+        if (this.state.brandName === null) {
             ApiClient.get("brand", this.state.collection.brandId)
                 .then((response) => {
                     this.setState({
@@ -101,19 +111,73 @@ class CollectionPage extends React.Component {
                     })
                 })
         }
+        if (this.state.indexMap === null) {
+            ApiClient.getAll("index")
+                .then(response => {
+                    let indexMap = new Map;
+                    for (let i = 0; i < response.length; i++) {
+                        indexMap.set(response[i].indexId, Index.fromJson(response[i]));
+                    }
+                    this.setState({
+                        indexMap
+                    })
+                })
+        }
+    }
+
+    componentDidUpdate(prevProps, prevState, prevContext) {
+        this.fetchData();
     }
 
     render() {
         let collection = this.state.collection;
+        let indexMap = this.state.indexMap === null ? new Map() : this.state.indexMap;
         if (collection === null) {
             return (
                 <SpinnerCircle/>
             )
         }
+        let collectionData = collection.data;
+        let indexKey = Object.keys(collectionData);
+
+        let columns = [
+            {
+                Header: "指标名",
+                id: "index",
+                accessor: key => indexMap.has(key) ? indexMap.get(key).displayName : key,
+                filterable: true
+            },
+            {
+                Header: "所属指标",
+                id: "parent",
+                accessor: key => {
+                    let parId = indexMap.has(key) ? indexMap.get(key).parentIndexId : undefined;
+                    return indexMap.has(parId) ? indexMap.get(parId).displayName : "未知";
+                },
+                filterable: true
+            },
+            {
+                Header: "数据",
+                id: "data",
+                accessor: key => {
+                    let data = collectionData[key];
+                    if (typeof data === "boolean") {
+                        return data ? "是" : "否";
+                    } else if (typeof data === "undefined") {
+                        return "无数据";
+                    } else {
+                        return data;
+                    }
+                }
+            }
+        ];
 
         return (
             <ContentWrapper>
                 <h3>{this.state.brandName}品牌{collection.year}年{getInYearTime(collection.period, collection.periodTimeNumber)}数据</h3>
+                <Card>
+                    <ReactTable data={indexKey} columns={columns}/>
+                </Card>
             </ContentWrapper>
         );
     }
