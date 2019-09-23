@@ -55,6 +55,20 @@ const Menu = [
         path: '/index'
     },
     {
+        name: '产品类型口碑',
+        icon: 'fa fa-clipboard-list',
+        submenu: [
+            {
+                name: '产品类型列表',
+                path: '/wordMouth-productlist'
+            },
+            {
+                name: '添加产品类型',
+                path: '/wordMouth-productadd',
+            }
+        ],
+    },
+    {
         name: 'Widgets',
         icon: 'icon-grid',
         path: '/widgets',
