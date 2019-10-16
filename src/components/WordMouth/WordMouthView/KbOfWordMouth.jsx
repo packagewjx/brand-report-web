@@ -28,7 +28,7 @@ export default class KbOfWordMouth extends React.Component {
     componentDidMount() {
         let product_pinyin = this.props.product_pinyin;
         // 获取概要信息
-        let url = 'http://localhost:5000/' + product_pinyin + '/aspect';
+        let url = process.env.REACT_APP_WORD_MOUTH_FRONT_BASE_URL + '/' + product_pinyin + '/aspect';
         $.get(url)
             .then((response) => {
                 // this.setState({data:response.data})
@@ -56,7 +56,7 @@ export default class KbOfWordMouth extends React.Component {
 
     handleKbSelect = (eventKey, event) => {
         let product_pinyin = this.props.product_pinyin;
-        let url = 'http://localhost:5000/' + product_pinyin + '/kb/' + String(eventKey);
+        let url = process.env.REACT_APP_WORD_MOUTH_FRONT_BASE_URL + '/' + product_pinyin + '/kb/' + String(eventKey);
         // console.log(url);
         let aspectId = parseInt(eventKey);
         let aspect_name = this.state.aspectKbsInfo[aspectId - 1][aspectId];

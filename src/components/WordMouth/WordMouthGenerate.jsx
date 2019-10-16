@@ -27,7 +27,7 @@ export default class WordMouthGenerate extends React.Component {
         //     }
         // });
 
-        $.get('http://localhost:5000/product/list'
+        $.get(process.env.REACT_APP_WORD_MOUTH_FRONT_BASE_URL + '/product/list'
         //     ,function(data,status){
         //     alert("数据: " + data + "\n状态: " + status);
         // }

@@ -39,7 +39,7 @@ export default class AspectOfWordMouth extends React.Component {
     componentDidMount() {
         let product_pinyin = this.props.product_pinyin;
         // 获取概要信息
-        let url = 'http://localhost:5000/' + product_pinyin + '/aspect';
+        let url = process.env.REACT_APP_WORD_MOUTH_FRONT_BASE_URL + '/' + product_pinyin + '/aspect';
         $.get(url)
             .then((response) => {
                 // console.log(response.data);
@@ -84,7 +84,7 @@ export default class AspectOfWordMouth extends React.Component {
         let prodcut_name = this.state.brandsInfo[brandId - 1][brandId];
         if (this.state.aspectTitle != "请选择需要查看的Aspect") {
             let product_pinyin = this.props.product_pinyin;
-            let url = 'http://localhost:5000/' + product_pinyin + '/aspect_trend/' + eventKey + '/' + this.state.aspectKey;
+            let url = process.env.REACT_APP_WORD_MOUTH_FRONT_BASE_URL+ '/' + product_pinyin + '/aspect_trend/' + eventKey + '/' + this.state.aspectKey;
             // console.log(url);
             $.get(url)
                 .then((response) => {
@@ -133,7 +133,7 @@ export default class AspectOfWordMouth extends React.Component {
         if (this.state.brandTitle != "请选择需要查看的品牌") {
             // alert(aspect_name);
             let product_pinyin = this.props.product_pinyin;
-            let url = 'http://localhost:5000/' + product_pinyin + '/aspect_trend/' + this.state.brandKey + '/' + String(eventKey);
+            let url = process.env.REACT_APP_WORD_MOUTH_FRONT_BASE_URL+ '/' + product_pinyin + '/aspect_trend/' + this.state.brandKey + '/' + String(eventKey);
             // console.log(url);
             $.get(url)
                 .then((response) => {

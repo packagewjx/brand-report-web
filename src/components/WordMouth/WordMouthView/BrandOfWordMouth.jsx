@@ -34,7 +34,7 @@ export default class BrandOfWordMouth extends React.Component {
     componentDidMount() {
         let product_pinyin = this.props.product_pinyin;
         // 获取概要信息
-        let url = 'http://localhost:5000/' + product_pinyin + '/aspect';
+        let url = process.env.REACT_APP_WORD_MOUTH_FRONT_BASE_URL +'/' + product_pinyin + '/aspect';
         $.get(url)
             .then((response) => {
                 // this.setState({data:response.data})
@@ -69,7 +69,7 @@ export default class BrandOfWordMouth extends React.Component {
         // console.log(eventKey);
         let product_pinyin = this.props.product_pinyin;
 
-        let url = 'http://localhost:5000/' + product_pinyin + '/aspect/' + String(eventKey);
+        let url = process.env.REACT_APP_WORD_MOUTH_FRONT_BASE_URL + '/' + product_pinyin + '/aspect/' + String(eventKey);
         $.get(url)
             .then((response) => {
                 // console.log(response.data)
