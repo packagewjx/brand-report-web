@@ -6,6 +6,7 @@ import PageLoader from './components/Common/PageLoader';
 
 import Base from './components/Layout/Base';
 import BasePage from './components/Layout/BasePage';
+import Welcome from "./components/Layout/Welcome";
 // import BaseHorizontal from './components/Layout/BaseHorizontal';
 
 /* Used to render a lazy component with react-router */
@@ -106,6 +107,7 @@ const IndustryReportManagementPage = lazy(() => import("./components/Report/Indu
 const IndexManagementPage = lazy(() => import("./components/Index/IndexManagementPage"));
 const CollectionManagementPage = lazy(() => import("./components/Report/BrandReport/CollectionManagementPage"));
 const CollectionPage = lazy(() => import("./components/Report/BrandReport/CollectionPage"));
+const Questionnaire = lazy(() => import("./components/Report/Questionnaire/Questionnaire"));
 
 const WordMouthAdd = lazy(() => import("./components/WordMouth/WordMouthAdd"));
 const WordMouthGenerate = lazy(() => import("./components/WordMouth/WordMouthGenerate"));
@@ -259,16 +261,22 @@ const Routes = ({location}) => {
                                     <Route path="/collection" exact={true}
                                            component={waitFor((CollectionManagementPage))}/>
                                     <Route path="/collection/:id" component={waitFor(CollectionPage)}/>
+                                    <Route path="/questionnaire" component={waitFor(Questionnaire)}/>
 
                                     {/*指标管理*/}
                                     <Route path="/index" exact={true} component={waitFor(IndexManagementPage)}/>
 
                                     {/*/!*口碑分析*!/*/}
-                                    <Route path="/wordMouth-productlist" exact={true} component={waitFor(WordMouthGenerate)}/>
-                                    <Route path="/wordMouth-productlist/:product" component={waitFor(ProductWordOfMouthView)}/>
+                                    <Route path="/wordMouth-productlist" exact={true}
+                                           component={waitFor(WordMouthGenerate)}/>
+                                    <Route path="/wordMouth-productlist/:product"
+                                           component={waitFor(ProductWordOfMouthView)}/>
                                     <Route path="/wordMouth-productadd" component={waitFor(WordMouthAdd)}/>
 
-                                    <Redirect to="/dashboardv2"/>
+                                    {/*欢迎页*/}
+                                    <Route path="/welcome" component={Welcome}/>
+
+                                    <Redirect to="/welcome"/>
                                 </Switch>
                             </Suspense>
                         </div>

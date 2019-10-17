@@ -1,8 +1,8 @@
 const Menu = [
-    {
-        heading: 'Main Navigation',
-        translate: 'sidebar.heading.HEADER'
-    },
+    // {
+    //     heading: 'Main Navigation',
+    //     translate: 'sidebar.heading.HEADER'
+    // },
     // {
     //     name: 'Dashboard',
     //     icon: 'icon-speedometer',
@@ -41,6 +41,10 @@ const Menu = [
             {
                 name: '数据管理',
                 path: '/collection'
+            },
+            {
+                name: '数据录入',
+                path: '/questionnaire'
             }
         ],
     },

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 
 class Footer extends Component {
 
@@ -6,7 +6,7 @@ class Footer extends Component {
         const year = new Date().getFullYear()
         return (
             <footer className="footer-container">
-                <span>&copy; {year} - Angle</span>
+                <span>&copy; {year} - 华南理工大学王振宇实验室</span>
             </footer>
         );
     }
